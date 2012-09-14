@@ -3,14 +3,12 @@ package com.spidersaas.core
 /**
  * Defines redirect link.
  */
-trait HasRedirectLink {
+trait RedirectLink {
 
   private var internalRedirectLnk: Option[String] = None
 
   def redirectLink() = internalRedirectLnk
 
-  def redirectLink_(link: String) {
-    this.internalRedirectLnk = Some(link)
-  }
+  def redirectLink_=(link: String): Unit = this.internalRedirectLnk = Some(link)
 
 }
