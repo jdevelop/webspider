@@ -2,23 +2,22 @@ package com.spidersaas.parser
 
 import java.io.InputStream
 import com.spidersaas.core.Link
-import org.xml.sax.helpers.DefaultHandler
-import org.xml.sax.Attributes
+import org.jsoup.Jsoup
 
-class HtmlParser(current: Link, linkListener: LinkListener[Link]) extends DocumentParser[InputStream, Link] {
+import collection.JavaConversions._
 
-  class SaxParser extends DefaultHandler {
+class HtmlParser(current: Link,
+                 linkListener: LinkListener[Link],
+                 expressions: List[(String, ExtractFunction)] = defaults)
+  extends DocumentParser[InputStream, Link] {
 
-    override def startElement(uri: String, localName: String, qName: String, attributes: Attributes) {}
-
-    override def endElement(uri: String, localName: String, qName: String) {}
-
-    override def characters(ch: Array[Char], start: Int, length: Int) {}
-
-  }
 
   override def parse(source: InputStream) {
-    null
+    val doc = Jsoup.parse(source, "UTF-8", current.link)
+    for (
+      (exp, attr) <- expressions;
+      link <- doc.select(exp)
+    ) yield Link(attr(link))
   }
 
 }
