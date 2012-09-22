@@ -1,0 +1,15 @@
+http://www.google.com
+../../sample.html
+http://www.google.com/sample.html
+
+http://www.google.com/
+../../sample.html
+http://www.google.com/sample.html
+
+http://www.google.com/context/here/
+/sample.html
+http://www.google.com/sample.html
+
+http://www.google.com/context/here/
+../sample.html
+http://www.google.com/context/sample.html

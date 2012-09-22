@@ -11,9 +11,9 @@ package object parser {
   }
 
   val defaults = List(
-    ("a[href]", plainAttribute("href")),
-    ("img[src]", plainAttribute("src")),
-    ("form[action]", plainAttribute("action"))
+    ("a[href]", plainAttribute("href") _),
+    ("img[src]", plainAttribute("src") _),
+    ("form[action]", plainAttribute("action") _)
   )
 
 }
