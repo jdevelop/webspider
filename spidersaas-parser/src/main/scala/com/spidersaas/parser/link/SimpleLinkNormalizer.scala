@@ -14,7 +14,7 @@ object SimpleLinkNormalizer {
 
   private val SLASH = Pattern.compile("/")
 
-  private val portMappings = Map(
+  private val defaultSchemaPorts = Map(
     "http" -> 80,
     "https" -> 443,
     "ftp" -> 21
@@ -30,21 +30,6 @@ class SimpleLinkNormalizer extends RelativeLinkNormalizer {
   import SimpleLinkNormalizer._
 
   override def normalize(current: Link, relativeLink: String): String = {
-    if (ABSOLUTE_URL_REGEX.matcher(relativeLink).find()) {
-      return relativeLink
-    }
-    val parentLink = current.link
-    val baseURL = parentLink.endsWith("/") match {
-      case true => parentLink
-      case _ => (parentLink.lastIndexOf('/'), parentLink.lastIndexOf("://")) match {
-        case (slashIdx, protoIdx) => slashIdx > -1 match {
-          case true if slashIdx - 2 == protoIdx => parentLink + "/"
-          case false => parentLink.substring(0, slashIdx + 1)
-        }
-        case _ => throw NotALinkExcepton("Wrong link type: %1$s".format(parentLink))
-      }
-    }
-    val url = new URL(baseURL)
 
     def wipeLevelUps(items: List[String], urlPart: String) =
       urlPart match {
@@ -59,8 +44,8 @@ class SimpleLinkNormalizer extends RelativeLinkNormalizer {
     def splitAndTransform(urlString: String) =
       SLASH.split(urlString).toList.foldLeft(List[String]())(wipeLevelUps).reverse.mkString("/")
 
-    def formatPort =
-      portMappings.get(url.getProtocol) match {
+    def formatPort(url: URL) =
+      defaultSchemaPorts.get(url.getProtocol) match {
         case None => ":" + url.getPort
         case Some(_) => ""
       }
@@ -75,23 +60,41 @@ class SimpleLinkNormalizer extends RelativeLinkNormalizer {
       case _ => content + suffix
     }
 
-    def prepareUrl(newPath: String) = {
+    def prepareUrl(url: URL)(newPath: String) = {
       url.getProtocol + "://" +
         suffixIt("@", url.getUserInfo) +
         url.getHost +
-        formatPort +
+        formatPort(url) +
         "/" +
         newPath +
         prefixIt("?", url.getQuery) +
         prefixIt("#", url.getRef)
     }
 
-    prepareUrl(
+    if (ABSOLUTE_URL_REGEX.matcher(relativeLink).find()) {
+      val url = new URL(relativeLink);
+      return prepareUrl(url)(
+        splitAndTransform(url.getPath)
+      )
+    }
+    val parentLink = current.link
+    val baseURL = parentLink.endsWith("/") match {
+      case true => parentLink
+      case _ => (parentLink.lastIndexOf('/'), parentLink.lastIndexOf("://")) match {
+        case (slashIdx, protoIdx) => slashIdx > -1 match {
+          case true if slashIdx - 2 == protoIdx => parentLink + "/"
+          case false => parentLink.substring(0, slashIdx + 1)
+        }
+        case _ => throw NotALinkExcepton("Wrong link type: %1$s".format(parentLink))
+      }
+    }
+    val url = new URL(baseURL)
+
+    prepareUrl(url)(
       relativeLink.startsWith("/") match {
         case true => splitAndTransform(relativeLink)
         case false => splitAndTransform(url.getPath + relativeLink)
       }
-
     )
   }
 
