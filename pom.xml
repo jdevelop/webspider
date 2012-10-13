@@ -3,13 +3,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.spidersaas</groupId>
-    <artifactId>spidersaas-parent</artifactId>
+    <groupId>com.webspider</groupId>
+    <artifactId>webspider-parent</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>spidersaas-parent</name>
-    <url>https://github.com/jdevelop/spidersaas</url>
+    <name>webspider-parent</name>
+    <url>https://github.com/jdevelop/webspider</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -34,17 +34,17 @@
             <!-- Modules dependencies -->
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>spidersaas-core</artifactId>
+                <artifactId>webspider-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>spidersaas-parser</artifactId>
+                <artifactId>webspider-parser</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>spidersaas-transport</artifactId>
+                <artifactId>webspider-transport</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -71,7 +71,6 @@
             </dependency>
 
 
-
             <!-- Test dependencies -->
             <dependency>
                 <groupId>org.scalatest</groupId>
@@ -89,9 +88,9 @@
     </dependencyManagement>
 
     <modules>
-        <module>spidersaas-core</module>
-        <module>spidersaas-transport</module>
-        <module>spidersaas-parser</module>
+        <module>webspider-core</module>
+        <module>webspider-transport</module>
+        <module>webspider-parser</module>
     </modules>
 
     <build>
