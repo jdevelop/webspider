@@ -91,6 +91,7 @@
         <module>webspider-core</module>
         <module>webspider-transport</module>
         <module>webspider-parser</module>
+        <module>webspider</module>
     </modules>
 
     <build>
