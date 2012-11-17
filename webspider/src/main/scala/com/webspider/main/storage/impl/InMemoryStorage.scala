@@ -3,12 +3,12 @@ package com.webspider.main.storage.impl
 import com.webspider.main.storage.Storage
 import com.webspider.core.utils.LogHelper
 import com.webspider.core.{LinkState, Link}
-import collection.mutable.ArrayBuffer
 import java.util.UUID
+import collection.mutable.{Set, HashSet}
 
 class InMemoryStorage(taskId: Int) extends Storage with LogHelper{
 
-  var links: ArrayBuffer[Link] = new ArrayBuffer[Link]()
+  var links: Set[Link] = new HashSet[Link]()
 
   def processed(): Long = links.filter(_.linkState() == LinkState.PROCESSED).size
 
@@ -45,6 +45,8 @@ class InMemoryStorage(taskId: Int) extends Storage with LogHelper{
     debug("Release storage")
     links.clear()
   }
+
+  def results(): List[Link] = links.filter(_.linkState() == LinkState.PROCESSED).toList
 }
 
 object InMemoryStorageBuilder {

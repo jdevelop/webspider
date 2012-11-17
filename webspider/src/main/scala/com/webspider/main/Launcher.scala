@@ -14,7 +14,7 @@ object Launcher {
   def main(args: Array[String]){
     val config = new TaskConfiguration()
     config.storage = Some(InMemoryStorageBuilder.builder.withTaskId(1).build())
-    processTask("http://ya.ru", config)
+    processTask("http://google.com", config)
   }
 
   def processTask(url: String, taskConfig: TaskConfiguration){
@@ -22,9 +22,9 @@ object Launcher {
     val system = ActorSystem("SpiderSystem")
 
     // create the master
-    val master = system.actorOf(Props(new Master(taskConfig)), name = "master")
+    val master = system.actorOf(Props(new Master(new Task(url), taskConfig)), name = "master")
 
     // start the calculation
-    master ! ProcessTask(new Task(url))
+    master ! ProcessTask
   }
 }

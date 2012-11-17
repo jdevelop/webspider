@@ -10,4 +10,5 @@ trait Storage {
   def pop(): Option[Link]
   def save(link: Link)
   def push(link: Link)
+  def results(): List[Link]
 }
