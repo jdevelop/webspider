@@ -1,14 +1,14 @@
 package com.webspider.main.worker
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.Actor
 import com.webspider.core.utils.LogHelper
 import com.webspider.transport.http.HttpTransport
 import com.webspider.core.Link
 import com.webspider.transport.DocumentState._
 import org.apache.http.impl.client.DefaultHttpClient
 import com.webspider.parser.{LinkListener, HtmlParser}
-import com.webspider.parser.link.{SimpleLinkNormalizer, RelativeLinkNormalizer}
-import com.webspider.main.worker.LinkProcessingDone
+import com.webspider.parser.link.SimpleLinkNormalizer
+import org.apache.http.HttpStatus
 
 class Worker extends Actor with LogHelper {
 
@@ -20,8 +20,7 @@ class Worker extends Actor with LogHelper {
 
         state match {
           case Ok() => {
-            link.statusCode = 200
-            debug("Process link %s %s".format(link, link.statusCode))
+            link.statusCode = HttpStatus.SC_OK
 
             val listener = new LinkListener[Link] {
               def linkFound(parent: Link, child: Link) {
@@ -32,9 +31,15 @@ class Worker extends Actor with LogHelper {
               val linkNormalizer = new SimpleLinkNormalizer
             }.parse(resultStream)
           }
-          case Error(_) => {
-            debug("Process link %s".format(link) + " returned Error")
+          case Error(errorCode: Int) => {
+            link.statusCode = errorCode
+            sender ! StoreErrorLink(link)
           }
+        }
+      }catch {
+        case ex: Exception => {
+          error("!!!! Process of %s ends with exception <%s>".format(link.link, ex.getMessage))
+          ex.printStackTrace()
         }
       }finally {
         sender ! LinkProcessingDone(link)

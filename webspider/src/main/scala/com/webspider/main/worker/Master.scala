@@ -18,7 +18,6 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
   var currentProcessingLinks: Set[String] = new HashSet[String]()
 
   val start: Long = System.currentTimeMillis
-  val workerRouter = context.actorOf(Props[Worker].withRouter(RoundRobinRouter(MAX_WORKERS)), name = "workerRouter")
 
   def receive = {
 
@@ -30,12 +29,13 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
       if (storage.processed() > config.maxLinks || (storage.queued() == 0 && workersCount == 0)){
         self ! FinishTask
       }else {
-        debug("Working actors %s".format(workersCount))
         for (i <- 0 until (MAX_WORKERS - workersCount)){
           storage.pop() match {
             case Some(link) => {
+              debug("Processing the link <%s>".format(link))
               currentProcessingLinks += link.link
-              workerRouter ! ProcessLink(link)
+              val worker = context.actorOf(Props(new Worker()), name = "worker_%s".format(link.uniqueId()))
+              worker ! ProcessLink(link)
               workersCount += 1
             }
             case None => {}
@@ -59,6 +59,10 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
       }
     }
 
+    case StoreErrorLink(link) => {
+      storage.save(link)
+    }
+
     case FinishTask => {
       debug("=" * 50)
       debug("Finish task %s".format(task))
@@ -67,7 +71,9 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
       debug("Queued : %s".format(storage.queued()))
       debug("Time consumed : %s ms.".format(System.currentTimeMillis() - start))
       debug("=" * 50)
-      storage.results().foreach(debug(_))
+      storage.results().foreach(link => {
+        debug("%s [%s] - %s".format(link.link, link.uniqueId(), link.statusCode))
+      })
       debug("=" * 50)
       storage.release()
       context.stop(self)
@@ -75,8 +81,13 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
     }
 
     case ShowStats => {
+      debug("=" * 50)
+      debug("Stats")
+      debug("=" * 50)
       debug("Processed : %s".format(storage.processed()))
       debug("Queued : %s".format(storage.queued()))
+      debug("Working actors %s".format(workersCount))
+      debug("=" * 50)
     }
 
     case Terminated(ref) => {
@@ -91,7 +102,7 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
     context.system.scheduler.schedule(SCHEDULER_DELAY, SCHEDULER_DELAY, self, ProcessQueuedLinks)
 
     if (config.showStats){
-      context.system.scheduler.schedule(SCHEDULER_DELAY, SCHEDULER_DELAY, self, ShowStats)
+      context.system.scheduler.schedule(SCHEDULER_DELAY, 5 seconds, self, ShowStats)
     }
   }
 }
