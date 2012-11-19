@@ -64,30 +64,30 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
     }
 
     case FinishTask => {
-      debug("=" * 50)
-      debug("Finish task %s".format(task))
-      debug("=" * 50)
-      debug("Processed : %s".format(storage.processed()))
-      debug("Queued : %s".format(storage.queued()))
-      debug("Time consumed : %s ms.".format(System.currentTimeMillis() - start))
-      debug("=" * 50)
+      info("=" * 50)
+      info("Finish task %s".format(task))
+      info("=" * 50)
+      info("Processed : %s".format(storage.processed()))
+      info("Queued : %s".format(storage.queued()))
+      info("Time consumed : %s ms.".format(System.currentTimeMillis() - start))
+      info("=" * 50)
       storage.results().foreach(link => {
-        debug("%s [%s] - %s".format(link.link, link.uniqueId(), link.statusCode))
+        info("%s [%s]".format(link.link, link.statusCode))
       })
-      debug("=" * 50)
+      info("=" * 50)
       storage.release()
       context.stop(self)
       context.system.shutdown()
     }
 
     case ShowStats => {
-      debug("=" * 50)
-      debug("Stats")
-      debug("=" * 50)
-      debug("Processed : %s".format(storage.processed()))
-      debug("Queued : %s".format(storage.queued()))
-      debug("Working actors %s".format(workersCount))
-      debug("=" * 50)
+      info("=" * 50)
+      info("Stats")
+      info("=" * 50)
+      info("Processed : %s".format(storage.processed()))
+      info("Queued : %s".format(storage.queued()))
+      info("Working actors %s".format(workersCount))
+      info("=" * 50)
     }
 
     case Terminated(ref) => {

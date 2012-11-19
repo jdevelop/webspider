@@ -7,6 +7,8 @@ trait LogHelper {
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
 
+  def info(msg: => Any) = if (logger.isInfoEnabled) logger.info(msg)
+  def info(msg: => Any, throwable: => Throwable) = if (logger.isInfoEnabled) logger.info(msg, throwable)
   def debug(msg: => Any) = if (logger.isDebugEnabled) logger.debug(msg)
   def debug(msg: => Any, throwable: => Throwable) = if (logger.isDebugEnabled) logger.debug(msg, throwable)
   def error(msg: => Any) = logger.error(msg)

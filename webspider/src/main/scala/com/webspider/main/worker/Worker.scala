@@ -38,8 +38,7 @@ class Worker extends Actor with LogHelper {
         }
       }catch {
         case ex: Exception => {
-          error("!!!! Process of %s ends with exception <%s>".format(link.link, ex.getMessage))
-          ex.printStackTrace()
+          error("Process of %s ends with exception".format(link.link), ex)
         }
       }finally {
         sender ! LinkProcessingDone(link)

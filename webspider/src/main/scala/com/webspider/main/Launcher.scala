@@ -14,7 +14,7 @@ object Launcher {
   def main(args: Array[String]){
     val config = new TaskConfiguration()
     config.storage = Some(InMemoryStorageBuilder.builder.withTaskId(1).build())
-    processTask("http://google.com", config)
+    processTask("http://ya.ru", config)
   }
 
   def processTask(url: String, taskConfig: TaskConfiguration){
