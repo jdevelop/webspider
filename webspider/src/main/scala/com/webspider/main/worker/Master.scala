@@ -32,7 +32,7 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
         for (i <- 0 until (MAX_WORKERS - workersCount)){
           storage.pop() match {
             case Some(link) => {
-              debug("Processing the link <%s>".format(link))
+              info("Processing the link <%s>".format(link))
               currentProcessingLinks += link.link
               val worker = context.actorOf(Props(new Worker()), name = "worker_%s".format(link.uniqueId()))
               worker ! ProcessLink(link)
@@ -45,7 +45,7 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
     }
 
     case LinkProcessingDone(link) => {
-      debug("Processing the link <%s> is done".format(link))
+      info("Processing the link <%s> is done".format(link))
       workersCount -= 1
       currentProcessingLinks -= link.link
     }
@@ -64,17 +64,20 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
     }
 
     case FinishTask => {
-      info("=" * 50)
-      info("Finish task %s".format(task))
-      info("=" * 50)
-      info("Processed : %s".format(storage.processed()))
-      info("Queued : %s".format(storage.queued()))
-      info("Time consumed : %s ms.".format(System.currentTimeMillis() - start))
-      info("=" * 50)
-      storage.results().foreach(link => {
-        info("%s [%s]".format(link.link, link.statusCode))
-      })
-      info("=" * 50)
+      def showResultsInfo() = {
+        info("=" * 50)
+        info("Finish task %s".format(task))
+        info("=" * 50)
+        info("Processed : %s".format(storage.processed()))
+        info("Queued : %s".format(storage.queued()))
+        info("Time consumed : %s ms.".format(System.currentTimeMillis() - start))
+        info("=" * 50)
+        storage.results().foreach(link => {
+          info("%s [%s]".format(link.link, link.statusCode))
+        })
+        info("=" * 50)
+      }
+      showResultsInfo()
       storage.release()
       context.stop(self)
       context.system.shutdown()
@@ -96,7 +99,7 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
   }
 
   private def processTask(task: Task) = {
-    debug("Processing the task %s".format(task))
+    info("Processing the task %s".format(task))
     storage.init()
     storage.push(Link(task.url))
     context.system.scheduler.schedule(SCHEDULER_DELAY, SCHEDULER_DELAY, self, ProcessQueuedLinks)
