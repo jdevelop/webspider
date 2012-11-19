@@ -2,7 +2,7 @@ package com.webspider.main.storage.impl
 
 import com.webspider.main.storage.Storage
 import com.webspider.core.utils.LogHelper
-import com.webspider.core.{LinkState, Link}
+import com.webspider.core.{LinkStorageState, Link}
 import java.util.UUID
 import collection.mutable.{Set, HashSet}
 
@@ -10,15 +10,17 @@ class InMemoryStorage(taskId: Int) extends Storage with LogHelper{
 
   var links: Set[Link] = new HashSet[Link]()
 
-  def processed(): Long = links.filter(_.linkState() == LinkState.PROCESSED).size
+  def processed(): Long = links.filter(_.storageState == LinkStorageState.PROCESSED).size
 
-  def queued(): Long = links.filter(_.linkState() == LinkState.QUEUED).size
+  def queued(): Long = links.filter(_.storageState == LinkStorageState.QUEUED).size
 
   def pop(): Option[Link] = {
-    val linkOpt = links.filter(_.linkState() == LinkState.QUEUED).headOption
+    val linkOpt = links.filter(_.storageState == LinkStorageState.QUEUED).headOption
     linkOpt match {
       case Some(link) => {
         links -= link
+        link.storageState = LinkStorageState.IN_PROGRESS
+        links += link
         return Some(link)
       }
       case None => None
@@ -26,13 +28,13 @@ class InMemoryStorage(taskId: Int) extends Storage with LogHelper{
   }
 
   def save(link: Link) {
-    link.linkState(LinkState.PROCESSED)
+    link.storageState= LinkStorageState.PROCESSED
     links = links.filterNot(_.uniqueId() == link.uniqueId())
     links += link
   }
 
   def push(link: Link) {
-    link.linkState(LinkState.QUEUED)
+    link.storageState = LinkStorageState.QUEUED
     link.uniqueId_(UUID.randomUUID())
     links += link
   }
@@ -46,7 +48,7 @@ class InMemoryStorage(taskId: Int) extends Storage with LogHelper{
     links.clear()
   }
 
-  def results(): List[Link] = links.filter(_.linkState() == LinkState.PROCESSED).toList
+  def results(): List[Link] = links.filter(_.storageState == LinkStorageState.PROCESSED).toList
 }
 
 object InMemoryStorageBuilder {

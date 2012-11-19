@@ -4,9 +4,11 @@ import com.webspider.core.utils.LogHelper
 import java.net.URI
 import org.apache.http.client.utils.{URIBuilder}
 
-object StrictAuthorityMatcher extends LogHelper{
+abstract class StrictAuthorityMatcher extends AuthorityMatcher with LogHelper{
 
-  def checkAuthorityMatch(original: String, target: String): Boolean = {
+  val original: String
+
+  def checkAuthorityMatch(target: String): Boolean = {
     //debug("Check authority matching " + original + " :: " + target)
     var res = false
     try {

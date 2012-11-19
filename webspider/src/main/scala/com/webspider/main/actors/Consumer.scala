@@ -1,4 +1,4 @@
-package com.webspider.main.worker
+package com.webspider.main.actors
 
 import akka.actor.{Terminated, Props, ActorRef, Actor}
 import com.webspider.core.utils.LogHelper
@@ -8,16 +8,21 @@ import com.webspider.main.config.TaskConfiguration
 import akka.util.duration._
 import com.webspider.main.filter.StrictAuthorityMatcher
 import collection.immutable.HashSet
+import com.webspider.main.storage.impl.{InMemoryStorageBuilder, InMemoryStorage}
+import collection.mutable.ArrayBuffer
 
-class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper {
+class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelper {
+
+  val startTime : Long = System.currentTimeMillis
 
   val MAX_WORKERS = config.maxWorkers
   val SCHEDULER_DELAY = 100 millis
-  val storage = config.storage.get
+  val storage = config.storage.getOrElse(InMemoryStorageBuilder.builder.withTaskId(1).build())
   var workersCount = 0
-  var currentProcessingLinks: Set[String] = new HashSet[String]()
 
-  val start: Long = System.currentTimeMillis
+  val authorityMatcher = new StrictAuthorityMatcher {
+    val original: String = task.url
+  }
 
   def receive = {
 
@@ -33,8 +38,7 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
           storage.pop() match {
             case Some(link) => {
               info("Processing the link <%s>".format(link))
-              currentProcessingLinks += link.link
-              val worker = context.actorOf(Props(new Worker()), name = "worker_%s".format(link.uniqueId()))
+              val worker = context.actorOf(Props(new Worker(authorityMatcher)), name = "worker_%s".format(link.uniqueId()))
               worker ! ProcessLink(link)
               workersCount += 1
             }
@@ -44,39 +48,20 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
       }
     }
 
-    case LinkProcessingDone(link) => {
-      info("Processing the link <%s> is done".format(link))
-      workersCount -= 1
-      currentProcessingLinks -= link.link
+    case AddToNextProcess(parent, child) => {
+      storage.push(child)
     }
 
-    case StoreLink(parent, child) => {
-      storage.save(parent)
-      if (!currentProcessingLinks.contains(child.link)){
-        if(StrictAuthorityMatcher.checkAuthorityMatch(task.url, parent.link)){
-          storage.push(child)
-        }
-      }
-    }
-
-    case StoreErrorLink(link) => {
+    case SaveLink(link) => {
       storage.save(link)
     }
 
+    case LinkProcessingDone(link) => {
+      info("Processing the link <%s> is done".format(link))
+      workersCount -= 1
+    }
+
     case FinishTask => {
-      def showResultsInfo() = {
-        info("=" * 50)
-        info("Finish task %s".format(task))
-        info("=" * 50)
-        info("Processed : %s".format(storage.processed()))
-        info("Queued : %s".format(storage.queued()))
-        info("Time consumed : %s ms.".format(System.currentTimeMillis() - start))
-        info("=" * 50)
-        storage.results().foreach(link => {
-          info("%s [%s]".format(link.link, link.statusCode))
-        })
-        info("=" * 50)
-      }
       showResultsInfo()
       storage.release()
       context.stop(self)
@@ -96,6 +81,20 @@ class Master(task: Task, config: TaskConfiguration) extends Actor with LogHelper
     case Terminated(ref) => {
       debug("Terminated  : " + ref)
     }
+  }
+
+  def showResultsInfo() = {
+    info("=" * 50)
+    info("Finish task %s".format(task))
+    info("=" * 50)
+    info("Processed : %s".format(storage.processed()))
+    info("Queued : %s".format(storage.queued()))
+    info("Time consumed : %s ms.".format(System.currentTimeMillis() - startTime))
+    info("=" * 50)
+    storage.results().foreach(link => {
+      info("%s [%s]".format(link.link, link.statusCode))
+    })
+    info("=" * 50)
   }
 
   private def processTask(task: Task) = {
