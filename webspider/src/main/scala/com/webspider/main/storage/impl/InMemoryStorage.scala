@@ -15,16 +15,12 @@ class InMemoryStorage(taskId: Int) extends Storage with LogHelper{
   def queued(): Long = links.filter(_.storageState == LinkStorageState.QUEUED).size
 
   def pop(): Option[Link] = {
-    val linkOpt = links.filter(_.storageState == LinkStorageState.QUEUED).headOption
-    linkOpt match {
-      case Some(link) => {
-        links -= link
-        link.storageState = LinkStorageState.IN_PROGRESS
-        links += link
-        return Some(link)
-      }
-      case None => None
-    }
+    links.filter(_.storageState == LinkStorageState.QUEUED).headOption.map(link => {
+      links -= link
+      link.storageState = LinkStorageState.IN_PROGRESS
+      links += link
+      link
+      }).orElse(None)
   }
 
   def save(link: Link) {

@@ -7,7 +7,7 @@ import com.webspider.core.Link
 import com.webspider.transport.DocumentState._
 import org.apache.http.impl.client.DefaultHttpClient
 import com.webspider.parser.{LinkListener, HtmlParser}
-import com.webspider.parser.link.{ApacheCommonsLinkNormalizer, SimpleLinkNormalizer}
+import com.webspider.parser.link.ApacheCommonsLinkNormalizer
 import org.apache.http.HttpStatus
 import com.webspider.transport.http.HttpTransport.HttpError
 import com.webspider.main.filter.AuthorityMatcher

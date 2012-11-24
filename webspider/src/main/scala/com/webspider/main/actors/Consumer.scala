@@ -1,15 +1,12 @@
 package com.webspider.main.actors
 
-import akka.actor.{Terminated, Props, ActorRef, Actor}
+import akka.actor.{Terminated, Props, Actor}
 import com.webspider.core.utils.LogHelper
-import akka.routing.RoundRobinRouter
 import com.webspider.core.{Task, Link}
 import com.webspider.main.config.TaskConfiguration
 import akka.util.duration._
 import com.webspider.main.filter.StrictAuthorityMatcher
-import collection.immutable.HashSet
-import com.webspider.main.storage.impl.{InMemoryStorageBuilder, InMemoryStorage}
-import collection.mutable.ArrayBuffer
+import com.webspider.main.storage.impl.InMemoryStorageBuilder
 
 class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelper {
 

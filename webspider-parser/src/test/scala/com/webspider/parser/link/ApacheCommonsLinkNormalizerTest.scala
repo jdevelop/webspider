@@ -2,7 +2,10 @@ package com.webspider.parser.link
 
 import org.scalatest.FlatSpec
 import com.webspider.core.Link
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class ApacheCommonsLinkNormalizerTest  extends FlatSpec {
 
   val normalizer = new ApacheCommonsLinkNormalizer

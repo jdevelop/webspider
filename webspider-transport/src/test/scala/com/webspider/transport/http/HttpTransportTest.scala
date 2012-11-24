@@ -4,7 +4,10 @@ import org.scalatest.FlatSpec
 import org.apache.http.impl.client.DefaultHttpClient
 import com.webspider.transport.DocumentState
 import com.webspider.core.Link
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class HttpTransportTest extends FlatSpec {
 
   "HttpTransport" should "be able to access common URLs" in {
