@@ -5,8 +5,6 @@ import org.specs2.mutable._
 
 class StrictAuthorityMatcherTest extends SpecificationWithJUnit {
 
-  addArguments(descFromExpectations)
-
   val authorityMatcher = new StrictAuthorityMatcher(){
     val original: String = "http://ya.ru"
   }
@@ -20,6 +18,9 @@ class StrictAuthorityMatcherTest extends SpecificationWithJUnit {
     }
     "correctly match authority link http://ya.ru/context" in {
       authorityMatcher.checkAuthorityMatch("http://ya.ru/context") must beTrue
+    }
+    "correctly match authority link http://www.ya.ru/context" in {
+      authorityMatcher.checkAuthorityMatch("http://www.ya.ru/context") must beTrue
     }
   }
 }
