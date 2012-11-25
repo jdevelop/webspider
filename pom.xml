@@ -134,6 +134,9 @@
                             <include>**/*Test.*</include>
                             <include>**/*Suite.*</include>
                         </includes>
+                        <excludes>
+                            <!--exclude>**/HtmlParserTest.*</exclude-->
+                        </excludes>
                     </configuration>
                 </plugin>
                 <plugin>

@@ -22,5 +22,11 @@ class StrictAuthorityMatcherTest extends SpecificationWithJUnit {
     "correctly match authority link http://www.ya.ru/context" in {
       authorityMatcher.checkAuthorityMatch("http://www.ya.ru/context") must beTrue
     }
+    "do not match authority link http://google.com/" in {
+      authorityMatcher.checkAuthorityMatch("http://google.com/") must beFalse
+    }
+    "do not match authority link http://www.google.com/" in {
+      authorityMatcher.checkAuthorityMatch("http://www.google.com/") must beFalse
+    }
   }
 }
