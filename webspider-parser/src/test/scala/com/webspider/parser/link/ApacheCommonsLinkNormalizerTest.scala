@@ -3,13 +3,13 @@ package com.webspider.parser.link
 import com.webspider.core.Link
 import org.specs2.mutable._
 
-class SimpleLinkNormalizerTest extends SpecificationWithJUnit {
+class ApacheCommonsLinkNormalizerTest  extends SpecificationWithJUnit {
 
-  val normalizer = new SimpleLinkNormalizer
+  val normalizer = new ApacheCommonsLinkNormalizer
 
-  "SimpleLinkNormalizer" should {
+  "ApacheCommonsLinkNormalizer" should {
     "correctly handle url list" in {
-      io.Source.fromURL(classOf[SimpleLinkNormalizerTest].
+      io.Source.fromURL(classOf[ApacheCommonsLinkNormalizer].
         getResource("/url-normalize-list")).
         getLines().
         filter(!_.trim().isEmpty).

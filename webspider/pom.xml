@@ -9,9 +9,9 @@
         <version>0.1-SNAPSHOT</version>
     </parent>
     <groupId>com.webspider</groupId>
-    <artifactId>webspider-transport</artifactId>
+    <artifactId>webspider</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>webspider-transport</name>
+    <name>webspider</name>
     <url>https://github.com/jdevelop/webspider</url>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -22,12 +22,29 @@
             <artifactId>webspider-core</artifactId>
         </dependency>
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>webspider-transport</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>webspider-parser</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-actor</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
@@ -37,6 +54,7 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.specs2</groupId>
             <artifactId>specs2_2.9.1</artifactId>

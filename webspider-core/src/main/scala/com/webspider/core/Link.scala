@@ -8,3 +8,4 @@ case class Link(link: String)
   with RedirectLink
   with Headers
   with ResultState[Int]
+  with LinkStorageState
