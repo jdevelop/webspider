@@ -3,7 +3,7 @@ package com.webspider.main.filter
 import com.webspider.core.utils.LogHelper
 import org.apache.http.client.utils.URIBuilder
 
-abstract class StrictAuthorityMatcher extends AuthorityMatcher with LogHelper{
+abstract class StrictAuthorityMatcher extends AuthorityMatcher with LogHelper {
 
   val original: String
   private val WWW_PART = "www."
@@ -11,11 +11,11 @@ abstract class StrictAuthorityMatcher extends AuthorityMatcher with LogHelper{
   def checkAuthorityMatch(target: String): Boolean = {
     try {
       val builder = new URIBuilder(target)
-      if(!builder.getHost.startsWith(WWW_PART)){
+      if (!builder.getHost.startsWith(WWW_PART)) {
         builder.setHost(WWW_PART + builder.getHost)
       }
       val originalBuilder = new URIBuilder(original)
-      if(!originalBuilder.getHost.startsWith(WWW_PART)){
+      if (!originalBuilder.getHost.startsWith(WWW_PART)) {
         originalBuilder.setHost(WWW_PART + originalBuilder.getHost)
       }
       return originalBuilder.getHost == builder.getHost
@@ -24,6 +24,6 @@ abstract class StrictAuthorityMatcher extends AuthorityMatcher with LogHelper{
         error(e, e)
       }
     }
-  false
+    false
   }
 }
