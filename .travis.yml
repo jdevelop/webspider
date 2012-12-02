@@ -1,0 +1,8 @@
+language: scala
+scala:
+   - 2.9.2
+notifications:
+    email:
+        recipients:
+            - jdevelop@gmail.com
+            - xaoc3dgraph@gmail.com

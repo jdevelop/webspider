@@ -1,6 +1,6 @@
 package com.webspider.parser
 
-import link.SimpleLinkNormalizer
+import link.ApacheCommonsLinkNormalizer
 import java.io.{FileInputStream, File}
 import com.webspider.core.Link
 
@@ -40,7 +40,7 @@ class HtmlParserTest extends SpecificationWithJUnit {
             }
           }
           new HtmlParser(url, listener) {
-            val linkNormalizer = new SimpleLinkNormalizer
+            val linkNormalizer = new ApacheCommonsLinkNormalizer
           }.parse(new FileInputStream(doc))
           val hasZeroLinks = linkMap.filter {
             case (k, v) => v == 0
