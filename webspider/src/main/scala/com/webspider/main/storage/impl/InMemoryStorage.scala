@@ -6,7 +6,7 @@ import com.webspider.core.{LinkStorageState, Link}
 import java.util.UUID
 import collection.mutable.{Set, HashSet}
 
-class InMemoryStorage(taskId: Int) extends Storage with LogHelper{
+class InMemoryStorage(taskId: Int) extends Storage with LogHelper {
 
   var links: Set[Link] = new HashSet[Link]()
 
@@ -20,11 +20,11 @@ class InMemoryStorage(taskId: Int) extends Storage with LogHelper{
       link.storageState = LinkStorageState.IN_PROGRESS
       links += link
       link
-      }).orElse(None)
+    }).orElse(None)
   }
 
   def save(link: Link) {
-    link.storageState= LinkStorageState.PROCESSED
+    link.storageState = LinkStorageState.PROCESSED
     links = links.filterNot(_.uniqueId() == link.uniqueId())
     links += link
   }
@@ -49,9 +49,16 @@ class InMemoryStorage(taskId: Int) extends Storage with LogHelper{
 
 object InMemoryStorageBuilder {
   def builder = new StorageBuilder
+
   class StorageBuilder {
     private var taskId: Int = 0
+
     def build(): InMemoryStorage = new InMemoryStorage(this.taskId)
-    def withTaskId(id: Int): StorageBuilder = { this.taskId = id; this }
+
+    def withTaskId(id: Int): StorageBuilder = {
+      this.taskId = id
+      this
+    }
   }
+
 }

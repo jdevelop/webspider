@@ -5,21 +5,16 @@ import com.webspider.core.utils.LogHelper
 import com.webspider.core.{Task, Link}
 import com.webspider.main.config.TaskConfiguration
 import akka.util.duration._
-import com.webspider.main.filter.StrictAuthorityMatcher
 import com.webspider.main.storage.impl.InMemoryStorageBuilder
 
 class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelper {
 
-  val startTime : Long = System.currentTimeMillis
+  val startTime: Long = System.currentTimeMillis
 
   val MAX_WORKERS = config.maxWorkers
   val SCHEDULER_DELAY = 100 millis
   val storage = config.storage.getOrElse(InMemoryStorageBuilder.builder.withTaskId(1).build())
   var workersCount = 0
-
-  val authorityMatcher = new StrictAuthorityMatcher {
-    val original: String = task.url
-  }
 
   def receive = {
 
@@ -28,14 +23,18 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
     }
 
     case ProcessQueuedLinks => {
-      if (storage.processed() > config.maxLinks || (storage.queued() == 0 && workersCount == 0)){
+      if (storage.processed() > config.maxLinks || (storage.queued() == 0 && workersCount == 0)) {
         self ! FinishTask
-      }else {
-        for (i <- 0 until (MAX_WORKERS - workersCount)){
+      } else {
+        for (i <- 0 until (MAX_WORKERS - workersCount)) {
           storage.pop() match {
             case Some(link) => {
               info("Processing the link <%s>".format(link))
-              val worker = context.actorOf(Props(new Worker(authorityMatcher)), name = "worker_%s".format(link.uniqueId()))
+              val worker = context.actorOf(
+                Props(
+                  new Worker(config.authorityMatcher, config.linkNormalizer)),
+                name = "worker_%s".format(link.uniqueId())
+              )
               worker ! ProcessLink(link)
               workersCount += 1
             }
@@ -80,7 +79,7 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
     }
   }
 
-  def showResultsInfo() = {
+  def showResultsInfo() {
     info("=" * 50)
     info("Finish task %s".format(task))
     info("=" * 50)
@@ -100,7 +99,7 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
     storage.push(Link(task.url))
     context.system.scheduler.schedule(SCHEDULER_DELAY, SCHEDULER_DELAY, self, ProcessQueuedLinks)
 
-    if (config.showStats){
+    if (config.showStats) {
       context.system.scheduler.schedule(SCHEDULER_DELAY, 5 seconds, self, ShowStats)
     }
   }

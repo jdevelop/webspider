@@ -3,7 +3,7 @@ package com.webspider.parser.link
 import com.webspider.core.Link
 import org.specs2.mutable._
 
-class ApacheCommonsLinkNormalizerTest  extends SpecificationWithJUnit {
+class ApacheCommonsLinkNormalizerTest extends SpecificationWithJUnit {
 
   val normalizer = new ApacheCommonsLinkNormalizer
 
@@ -15,7 +15,7 @@ class ApacheCommonsLinkNormalizerTest  extends SpecificationWithJUnit {
         filter(!_.trim().isEmpty).
         grouped(3).foreach {
         case List(current, raw, formatted) =>
-            normalizer.normalize(new Link(current), raw) must equalTo(formatted)
+          normalizer.normalize(new Link(current), raw) must equalTo(formatted)
         case unknown => println("Wrong chunk: %1$s".format(unknown))
       }
     }

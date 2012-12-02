@@ -7,6 +7,6 @@ import com.webspider.core.Link
  */
 trait RelativeLinkNormalizer {
 
-  def normalize(current: Link, relativeLink: String) : String
+  def normalize(current: Link, relativeLink: String): String
 
 }
