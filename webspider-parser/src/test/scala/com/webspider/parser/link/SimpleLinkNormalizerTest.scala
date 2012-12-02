@@ -15,7 +15,7 @@ class SimpleLinkNormalizerTest extends SpecificationWithJUnit {
         filter(!_.trim().isEmpty).
         grouped(3).foreach {
         case List(current, raw, formatted) =>
-            normalizer.normalize(new Link(current), raw) must equalTo(formatted)
+          normalizer.normalize(new Link(current), raw) must equalTo(formatted)
         case unknown => println("Wrong chunk: %1$s".format(unknown))
       }
     }

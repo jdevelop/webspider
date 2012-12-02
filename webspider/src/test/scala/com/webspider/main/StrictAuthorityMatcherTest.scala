@@ -5,7 +5,7 @@ import org.specs2.mutable._
 
 class StrictAuthorityMatcherTest extends SpecificationWithJUnit {
 
-  val authorityMatcher = new StrictAuthorityMatcher(){
+  val authorityMatcher = new StrictAuthorityMatcher() {
     val original: String = "http://ya.ru"
   }
 

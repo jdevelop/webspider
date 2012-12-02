@@ -4,16 +4,20 @@ import com.webspider.core.Task
 import akka.actor.{Props, ActorSystem}
 import com.webspider.main.actors.{ProcessTask, Consumer}
 import com.webspider.main.config.TaskConfiguration
+import filter.StrictAuthorityMatcher
 
 
 object Launcher {
 
-  def main(args: Array[String]){
-    val config = new TaskConfiguration()
-    processTask("http://ya.ru", config)
+  def main(args: Array[String]) {
+    val url = "http://ya.ru"
+    val config = new TaskConfiguration(authorityMatcher = new StrictAuthorityMatcher {
+      val original: String = url
+    })
+    processTask(url, config)
   }
 
-  def processTask(url: String, taskConfig: TaskConfiguration){
+  def processTask(url: String, taskConfig: TaskConfiguration) {
     // Create an Akka system
     val system = ActorSystem("SpiderSystem")
 
