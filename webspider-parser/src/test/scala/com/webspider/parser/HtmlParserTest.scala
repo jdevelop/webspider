@@ -42,11 +42,13 @@ class HtmlParserTest extends SpecificationWithJUnit {
           new HtmlParser(url, listener) {
             val linkNormalizer = new SimpleLinkNormalizer
           }.parse(new FileInputStream(doc))
-          val hasZeroLinks: Iterable[Boolean] = linkMap.values.map(_ > 0)
+          val hasZeroLinks = linkMap.filter {
+            case (k, v) => v == 0
+          }
           assert(
-            hasZeroLinks.forall {
-              case z => z
-            }
+            hasZeroLinks.size == 0
+            ,
+            hasZeroLinks.keys.mkString(",")
           )
       }
     }
