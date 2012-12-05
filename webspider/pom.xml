@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.webspider</groupId>
     <artifactId>webspider</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <name>webspider</name>
     <url>https://github.com/jdevelop/webspider</url>
     <properties>
@@ -46,6 +46,12 @@
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.scopt</groupId>
+            <artifactId>scopt_2.9.1</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_2.9.1</artifactId>
