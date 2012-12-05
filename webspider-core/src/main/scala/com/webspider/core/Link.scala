@@ -4,7 +4,8 @@ package com.webspider.core
  * Link entity
  */
 case class Link(link: String)
-  extends HasUniqueId
+  extends HasLink
+  with HasUniqueId
   with RedirectLink
   with Headers
   with ResultState[Int]
