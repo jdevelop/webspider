@@ -1,0 +1,5 @@
+#!/bin/sh
+for JAR in `ls -1 lib/*.jar`; do
+    CLASSPATH=$CLASSPATH':'$JAR
+done;
+java -Xms256m -Xmx512m -classpath $CLASSPATH com.webspider.main.Launcher $*
