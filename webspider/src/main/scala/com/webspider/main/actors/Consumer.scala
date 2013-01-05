@@ -5,7 +5,7 @@ import com.webspider.core.utils.LogHelper
 import com.webspider.core.{Task, Link}
 import com.webspider.main.config.TaskConfiguration
 import akka.util.duration._
-import com.webspider.main.storage.impl.InMemoryStorageBuilder
+import com.webspider.storage.impl.InMemoryStorageBuilder
 
 class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelper {
 

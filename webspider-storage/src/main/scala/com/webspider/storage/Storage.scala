@@ -1,4 +1,4 @@
-package com.webspider.main.storage
+package com.webspider.storage
 
 import com.webspider.core.Link
 

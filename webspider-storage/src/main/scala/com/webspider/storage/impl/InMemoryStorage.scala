@@ -1,6 +1,6 @@
-package com.webspider.main.storage.impl
+package com.webspider.storage.impl
 
-import com.webspider.main.storage.Storage
+import com.webspider.storage.Storage
 import com.webspider.core.utils.LogHelper
 import com.webspider.core.{LinkStorageState, Link}
 import java.util.UUID

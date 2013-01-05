@@ -1,6 +1,6 @@
 package com.webspider.main.config
 
-import com.webspider.main.storage.Storage
+import com.webspider.storage.Storage
 import com.webspider.parser.link.{ApacheCommonsLinkNormalizer, RelativeLinkNormalizer}
 import com.webspider.main.filter.FilterTrait
 import com.webspider.core.HasLink
