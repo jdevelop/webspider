@@ -2,7 +2,7 @@ package com.webspider.transport
 
 object DocumentState {
 
-  sealed case class State()
+  sealed class State()
 
   case class Ok() extends State
 
