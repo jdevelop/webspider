@@ -73,6 +73,11 @@
                 <artifactId>webspider-transport</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>webspider-storage</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- Project dependencies -->
             <dependency>
@@ -136,6 +141,7 @@
         <module>webspider-transport</module>
         <module>webspider-parser</module>
         <module>webspider</module>
+        <module>webspider-storage</module>
     </modules>
 
     <build>

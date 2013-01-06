@@ -1,18 +1,18 @@
-package com.webspider.main.storage.impl
+package com.webspider.storage.impl
 
-import com.webspider.main.storage.Storage
+import com.webspider.storage.{MustInitAndClose, LinkQueue, LinkStorage}
 import com.webspider.core.utils.LogHelper
 import com.webspider.core.{LinkStorageState, Link}
 import java.util.UUID
 import collection.mutable.{Set, HashSet}
 
-class InMemoryStorage(taskId: Int) extends Storage with LogHelper {
+class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHelper with MustInitAndClose {
 
   var links: Set[Link] = new HashSet[Link]()
 
-  def processed(): Long = links.filter(_.storageState == LinkStorageState.PROCESSED).size
+  override def storageSize(): Int = links.filter(_.storageState == LinkStorageState.PROCESSED).size
 
-  def queued(): Long = links.filter(_.storageState == LinkStorageState.QUEUED).size
+  override def queueSize(): Int = links.filter(_.storageState == LinkStorageState.QUEUED).size
 
   def pop(): Option[Link] = {
     links.filter(_.storageState == LinkStorageState.QUEUED).headOption.map(link => {
@@ -39,12 +39,14 @@ class InMemoryStorage(taskId: Int) extends Storage with LogHelper {
     debug("Init storage")
   }
 
-  def release() {
+  def close() {
     debug("Release storage")
     links.clear()
   }
 
   def results(): List[Link] = links.filter(_.storageState == LinkStorageState.PROCESSED).toList
+
+  override def reset() {}
 }
 
 object InMemoryStorageBuilder {
