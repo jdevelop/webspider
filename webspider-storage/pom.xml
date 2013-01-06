@@ -8,8 +8,7 @@
         <groupId>com.webspider</groupId>
         <version>0.1-SNAPSHOT</version>
     </parent>
-    <groupId>com.webspider</groupId>
-    <artifactId>webspider-transport</artifactId>
+    <artifactId>webspider-storage</artifactId>
     <version>0.1-SNAPSHOT</version>
     <url>https://github.com/jdevelop/webspider</url>
     <properties>
@@ -17,20 +16,12 @@
     </properties>
     <dependencies>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>webspider-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.scalatest</groupId>
-            <artifactId>${scalatest}</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>webspider-core</artifactId>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

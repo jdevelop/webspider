@@ -5,7 +5,7 @@ import com.webspider.core.utils.LogHelper
 import com.webspider.core.{Task, Link}
 import com.webspider.main.config.TaskConfiguration
 import akka.util.duration._
-import com.webspider.main.storage.impl.InMemoryStorageBuilder
+import com.webspider.storage.impl.InMemoryStorageBuilder
 
 class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelper {
 
@@ -13,7 +13,9 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
 
   val MAX_WORKERS = config.maxWorkers
   val SCHEDULER_DELAY = 100 millis
-  val storage = config.storage.getOrElse(InMemoryStorageBuilder.builder.withTaskId(1).build())
+  lazy val defaultStorage = InMemoryStorageBuilder.builder.withTaskId(1).build()
+  val storage = config.storage.getOrElse(defaultStorage)
+  val queue = config.queue.getOrElse(defaultStorage)
   var workersCount = 0
 
   def receive = {
@@ -23,11 +25,11 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
     }
 
     case ProcessQueuedLinks => {
-      if (storage.processed() > config.maxLinks || (storage.queued() == 0 && workersCount == 0)) {
+      if (storage.storageSize() > config.maxLinks || (queue.queueSize() == 0 && workersCount == 0)) {
         self ! FinishTask
       } else {
         for (i <- 0 until (MAX_WORKERS - workersCount)) {
-          storage.pop() match {
+          queue.pop() match {
             case Some(link) => {
               info("Processing the link <%s>".format(link))
               val worker = context.actorOf(
@@ -45,7 +47,7 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
     }
 
     case AddToNextProcess(parent, child) => {
-      storage.push(child)
+      queue.push(child)
     }
 
     case SaveLink(link) => {
@@ -59,7 +61,6 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
 
     case FinishTask => {
       showResultsInfo()
-      storage.release()
       context.stop(self)
       context.system.shutdown()
     }
@@ -68,8 +69,8 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
       info("=" * 50)
       info("Stats")
       info("=" * 50)
-      info("Processed : %s".format(storage.processed()))
-      info("Queued : %s".format(storage.queued()))
+      info("Processed : %s".format(storage.storageSize()))
+      info("Queued : %s".format(queue.queueSize()))
       info("Working actors %s".format(workersCount))
       info("=" * 50)
     }
@@ -83,8 +84,8 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
     info("=" * 50)
     info("Finish task %s".format(task))
     info("=" * 50)
-    info("Processed : %s".format(storage.processed()))
-    info("Queued : %s".format(storage.queued()))
+    info("Processed : %s".format(storage.storageSize()))
+    info("Queued : %s".format(queue.queueSize()))
     info("Time consumed : %s ms.".format(System.currentTimeMillis() - startTime))
     info("=" * 50)
     storage.results().foreach(link => {
@@ -95,8 +96,7 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
 
   private def processTask(task: Task) = {
     info("Processing the task %s".format(task))
-    storage.init()
-    storage.push(Link(task.url))
+    queue.push(Link(task.url))
     context.system.scheduler.schedule(SCHEDULER_DELAY, SCHEDULER_DELAY, self, ProcessQueuedLinks)
 
     if (config.showStats) {
