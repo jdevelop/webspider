@@ -20,7 +20,7 @@ abstract class HtmlParser(current: Link,
       (exp, attr) <- expressions;
       link <- doc.select(exp)
     ) {
-      linkListener.linkFound(current, Link(linkNormalizer.normalize(current, attr(link))))
+      linkListener.linkFound(current, new Link(linkNormalizer.normalize(current, attr(link))))
     }
   }
 
