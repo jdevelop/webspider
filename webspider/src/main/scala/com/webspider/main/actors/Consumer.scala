@@ -47,7 +47,7 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
     }
 
     case AddToNextProcess(parent, child) => {
-      queue.push(child)
+      queue.push(child, parent.id)
     }
 
     case SaveLink(link) => {
@@ -96,7 +96,7 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
 
   private def processTask(task: Task) = {
     info("Processing the task %s".format(task))
-    queue.push(new Link(task.url))
+    queue.push(new Link(task.url), null)
     context.system.scheduler.schedule(SCHEDULER_DELAY, SCHEDULER_DELAY, self, ProcessQueuedLinks)
 
     if (config.showStats) {

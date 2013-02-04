@@ -4,6 +4,7 @@ import com.webspider.storage.{MustInitAndClose, LinkQueue, LinkStorage}
 import com.webspider.core.utils.LogHelper
 import com.webspider.core.{LinkStorageState, Link}
 import collection.mutable.{Set, HashSet}
+import java.util.UUID
 
 class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHelper with MustInitAndClose {
 
@@ -28,9 +29,10 @@ class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHe
     links += link
   }
 
-  def push(link: Link) {
+  def push(link: Link, parent: UUID) = {
     link.storageState = LinkStorageState.QUEUED
     links += link
+    LinkQueue.Ok
   }
 
   def init() {

@@ -2,12 +2,20 @@ package com.webspider.core
 
 import java.util.UUID
 
+import Link.URLT
+
+object Link {
+
+  type URLT = String
+
+}
+
 /**
  * Link entity
  */
-case class Link(link: String,
+case class Link(link: URLT,
                 id: UUID,
-                redirectLink: Option[String] = None,
+                redirectLink: Option[URLT] = None,
                 requestHeaders: Map[String, String] = Map(),
                 responseHeaders: Map[String, String] = Map())
   extends HasLink
