@@ -7,12 +7,6 @@ import java.util.UUID
  */
 trait HasUniqueId {
 
-  private var id: UUID = _
-
-  def uniqueId(): UUID = id
-
-  def uniqueId_(id: UUID) {
-    this.id = id
-  }
+  val id: UUID
 
 }

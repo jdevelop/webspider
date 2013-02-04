@@ -31,6 +31,11 @@
             <groupId>org.specs2</groupId>
             <artifactId>${specs2}</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.sleepycat</groupId>
+            <artifactId>je</artifactId>
+            <version>5.0.58</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

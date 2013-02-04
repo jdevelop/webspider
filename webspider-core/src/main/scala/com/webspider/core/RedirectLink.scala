@@ -5,10 +5,6 @@ package com.webspider.core
  */
 trait RedirectLink {
 
-  private var internalRedirectLnk: Option[String] = None
-
-  def redirectLink() = internalRedirectLnk
-
-  def redirectLink_=(link: String): Unit = this.internalRedirectLnk = Some(link)
+  val redirectLink: Option[String]
 
 }

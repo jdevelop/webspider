@@ -1,10 +1,10 @@
-package com.webspider.storage.impl
+package com.webspider.storage.memory
 
 import com.webspider.storage.{MustInitAndClose, LinkQueue, LinkStorage}
 import com.webspider.core.utils.LogHelper
 import com.webspider.core.{LinkStorageState, Link}
-import java.util.UUID
 import collection.mutable.{Set, HashSet}
+import java.util.UUID
 
 class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHelper with MustInitAndClose {
 
@@ -25,14 +25,14 @@ class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHe
 
   def save(link: Link) {
     link.storageState = LinkStorageState.PROCESSED
-    links = links.filterNot(_.uniqueId() == link.uniqueId())
+    links = links.filterNot(_.id == link.id)
     links += link
   }
 
-  def push(link: Link) {
+  def push(link: Link, parent: UUID) = {
     link.storageState = LinkStorageState.QUEUED
-    link.uniqueId_(UUID.randomUUID())
     links += link
+    LinkQueue.Ok
   }
 
   def init() {
