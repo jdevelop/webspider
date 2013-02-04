@@ -5,8 +5,8 @@ package com.webspider.core
  */
 trait Headers {
 
-  var requestHeaders: Map[String, String] = Map()
+  val requestHeaders: Map[String, String]
 
-  var responseHeaders: Map[String, String] = Map()
+  val responseHeaders: Map[String, String]
 
 }

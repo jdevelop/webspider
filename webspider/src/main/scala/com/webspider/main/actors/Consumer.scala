@@ -5,7 +5,7 @@ import com.webspider.core.utils.LogHelper
 import com.webspider.core.{Task, Link}
 import com.webspider.main.config.TaskConfiguration
 import akka.util.duration._
-import com.webspider.storage.impl.InMemoryStorageBuilder
+import com.webspider.storage.memory.InMemoryStorageBuilder
 
 class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelper {
 
@@ -35,7 +35,7 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
               val worker = context.actorOf(
                 Props(
                   new Worker(config.authorityMatcher, config.linkNormalizer)),
-                name = "worker_%s".format(link.uniqueId())
+                name = "worker_%s".format(link.id)
               )
               worker ! ProcessLink(link)
               workersCount += 1
@@ -47,7 +47,7 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
     }
 
     case AddToNextProcess(parent, child) => {
-      queue.push(child)
+      queue.push(child, parent.id)
     }
 
     case SaveLink(link) => {
@@ -96,7 +96,7 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
 
   private def processTask(task: Task) = {
     info("Processing the task %s".format(task))
-    queue.push(Link(task.url))
+    queue.push(new Link(task.url), null)
     context.system.scheduler.schedule(SCHEDULER_DELAY, SCHEDULER_DELAY, self, ProcessQueuedLinks)
 
     if (config.showStats) {
