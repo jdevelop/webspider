@@ -2,18 +2,13 @@ package com.webspider.core
 
 
 trait LinkStorageState {
-  private var state: Int = _
 
-  def storageState = state
+  val storageState: LinkStorageState.Value
 
-  def storageState_=(state: Int) {
-    this.state = state
-  }
 }
 
-object LinkStorageState {
-  val IN_PROGRESS = 0
-  val QUEUED = 1
-  val PROCESSED = 2
-  val SAVED = 3
+object LinkStorageState extends Enumeration {
+
+  val IN_PROGRESS, QUEUED, PROCESSED, SAVED = Value
+
 }

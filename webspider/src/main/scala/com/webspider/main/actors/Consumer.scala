@@ -30,7 +30,7 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
       } else {
         for (i <- 0 until (MAX_WORKERS - workersCount)) {
           queue.pop() match {
-            case Some(link) => {
+            case Right(link) => {
               info("Processing the link <%s>".format(link))
               val worker = context.actorOf(
                 Props(
@@ -40,7 +40,8 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
               worker ! ProcessLink(link)
               workersCount += 1
             }
-            case None => {}
+            // FIXME should process with retry or abort here
+            case Left(_) => {}
           }
         }
       }
