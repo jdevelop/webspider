@@ -1,9 +1,9 @@
 webspider  [![Build Status](https://secure.travis-ci.org/jdevelop/webspider.png)](http://travis-ci.org/jdevelop/webspider)
 =========
 
-Open WEB spider platform, inspired by ![LinkTiger](http://www.linktiger.com) and ![PageFreezer](http://pagefreezer.com)
+Open WEB spider platform, inspired by [LinkTiger](http://www.linktiger.com) and [PageFreezer](http://pagefreezer.com)
 
-The related projects are listed ![Here](http://java-source.net/open-source/crawlers/java-web-crawler)
+The related projects are listed [Here](http://java-source.net/open-source/crawlers/java-web-crawler)
 
 ## Description ##
 
