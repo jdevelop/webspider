@@ -17,7 +17,8 @@ case class Link(link: URLT,
                 id: UUID,
                 redirectLink: Option[URLT] = None,
                 requestHeaders: Map[String, String] = Map(),
-                responseHeaders: Map[String, String] = Map())
+                responseHeaders: Map[String, String] = Map(),
+                storageState: LinkStorageState.Value = LinkStorageState.QUEUED)
   extends HasLink
   with HasUniqueId
   with RedirectLink

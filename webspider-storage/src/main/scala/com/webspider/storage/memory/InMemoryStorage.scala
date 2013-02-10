@@ -5,6 +5,7 @@ import com.webspider.core.utils.LogHelper
 import com.webspider.core.{LinkStorageState, Link}
 import collection.mutable.{Set, HashSet}
 import java.util.UUID
+import com.webspider.storage.LinkQueue.{NoRecordInDatabase, PopError}
 
 class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHelper with MustInitAndClose {
 
@@ -12,26 +13,23 @@ class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHe
 
   override def storageSize(): Int = links.filter(_.storageState == LinkStorageState.PROCESSED).size
 
-  override def queueSize(): Int = links.filter(_.storageState == LinkStorageState.QUEUED).size
+  override def queueSize(): Long = links.filter(_.storageState == LinkStorageState.QUEUED).size
 
-  def pop(): Option[Link] = {
+  def pop(): Either[PopError, Link] = {
     links.filter(_.storageState == LinkStorageState.QUEUED).headOption.map(link => {
       links -= link
-      link.storageState = LinkStorageState.IN_PROGRESS
-      links += link
-      link
-    }).orElse(None)
+      links += link.copy(storageState = LinkStorageState.IN_PROGRESS)
+      Right(link)
+    }).getOrElse(Left(NoRecordInDatabase))
   }
 
   def save(link: Link) {
-    link.storageState = LinkStorageState.PROCESSED
     links = links.filterNot(_.id == link.id)
-    links += link
+    links += link.copy(storageState = LinkStorageState.PROCESSED)
   }
 
   def push(link: Link, parent: UUID) = {
-    link.storageState = LinkStorageState.QUEUED
-    links += link
+    links += link.copy(storageState = LinkStorageState.QUEUED)
     LinkQueue.Ok
   }
 
