@@ -50,6 +50,7 @@ class Worker(authorityMatcher: FilterTrait[HasLink],
         }
       } finally {
         sender ! LinkProcessingDone(link)
+        context.stop(self)
       }
     }
   }

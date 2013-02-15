@@ -4,7 +4,7 @@ import akka.actor.{Terminated, Props, Actor}
 import com.webspider.core.utils.LogHelper
 import com.webspider.core.{Task, Link}
 import com.webspider.main.config.TaskConfiguration
-import akka.util.duration._
+import scala.concurrent.duration._
 import com.webspider.storage.memory.InMemoryStorageBuilder
 
 class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelper {
@@ -96,6 +96,8 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
   }
 
   private def processTask(task: Task) = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
     info("Processing the task %s".format(task))
     queue.push(new Link(task.url), null)
     context.system.scheduler.schedule(SCHEDULER_DELAY, SCHEDULER_DELAY, self, ProcessQueuedLinks)

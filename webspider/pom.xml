@@ -35,7 +35,7 @@
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-actor</artifactId>
+            <artifactId>akka-actor_2.10</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -53,7 +53,7 @@
 
         <dependency>
             <groupId>com.github.scopt</groupId>
-            <artifactId>scopt_2.9.1</artifactId>
+            <artifactId>scopt_2.10</artifactId>
         </dependency>
 
         <dependency>
@@ -79,6 +79,20 @@
             <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>
+                <configuration>
+                    <launchers>
+                        <launcher>
+                            <id>cmd-launcher</id>
+                            <mainClass>com.webspider.main.CMDLauncher</mainClass>
+                            <!-- args are optional -->
+                            <args>
+                                <arg>-u</arg>
+                                <arg>http://ya.ru</arg>
+                            </args>
+                        </launcher>
+                        <!-- you could define other launcher -->
+                    </launchers>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
