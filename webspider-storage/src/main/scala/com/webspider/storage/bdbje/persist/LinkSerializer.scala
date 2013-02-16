@@ -3,7 +3,7 @@ package com.webspider.storage.bdbje.persist
 import com.sleepycat.bind.tuple.{TupleInput, TupleOutput, TupleBinding}
 import java.util.UUID
 import java.nio.ByteBuffer
-import com.webspider.core.Link
+import com.webspider.core.{LinkStorageState, Link}
 
 object LinkSerializer {
 
@@ -46,12 +46,13 @@ object LinkSerializer {
     def entryToObject(src: TupleInput): Link = {
       val id = keySerializer.entryToObject(src)
       val link = src.readString()
-      Link(link, id)
+      Link(link, id, storageState = LinkStorageState(src.readInt()))
     }
 
     def objectToEntry(src: Link, out: TupleOutput) {
       keySerializer.objectToEntry(src.id, out)
       out.writeString(src.link)
+      out.writeInt(src.storageState.id)
     }
   }
 
