@@ -21,22 +21,22 @@ trait BDBJEQueue extends LinkQueue with MustInitAndClose {
 
   val qSize = new AtomicLong(0)
 
-  val env: Environment
+  def env: Environment
 
   // contains UUID -> Record mappings
-  val mainDatabase: Database
+  def mainDatabase: Database
 
   // Containts redirect URL -> UUID mapping
-  val urlDatabase: Database
+  def urlDatabase: Database
 
   // Contains mappings UUID -> parent UUID
-  val relationDatabase: Database
+  def relationDatabase: Database
 
   // holds queue of links
-  val queueDatabase: SecondaryDatabase
+  def queueDatabase: SecondaryDatabase
 
   // holds current "in-progress" links
-  val inprogressDatabase: SecondaryDatabase
+  def inprogressDatabase: SecondaryDatabase
 
   val linkKeySerializer: TupleBinding[UUID]
 
