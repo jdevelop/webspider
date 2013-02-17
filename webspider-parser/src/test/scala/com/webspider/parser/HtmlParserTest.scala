@@ -9,7 +9,7 @@ import org.specs2.mutable._
 
 class HtmlParserTest extends SpecificationWithJUnit {
 
-  val resources = new File("src/test/resources/htmlparser/")
+  val resources = if (new File("./webspider-parser").exists()) new File("./webspider-parser/src/test/resources/htmlparser/") else new File("src/test/resources/htmlparser/")
   val docsDir = new File(resources, "document")
   val linksDir = new File(resources, "links")
   val linkDir = new File(resources, "link")
