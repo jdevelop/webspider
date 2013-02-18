@@ -29,4 +29,6 @@ trait LogHelper {
   def error(msg: => Any, throwable: => Throwable) {
     logger.error(msg, throwable)
   }
+
+  def logSeparator = info("=" * 50)
 }

@@ -19,12 +19,13 @@ class Worker(authorityMatcher: FilterTrait[HasLink],
     case ProcessLink(link) => {
       try {
         implicit val client = new DefaultHttpClient()
-        val (resultStream, state) = HttpTransport.Get().retrieveDocument(link)
+        val (resultStream, state, contentType, responseHeaders) = HttpTransport.Get().retrieveDocument(link)
 
         state match {
           case Ok() => {
-            link.statusCode = HttpStatus.SC_OK
-            sender ! SaveLink(link)
+            sender ! SaveLink(link.copy(statusCode = HttpStatus.SC_OK,
+              responseHeaders = responseHeaders,
+              contentType = contentType))
 
             val needToProcess = authorityMatcher.shallProcess(link)
             if (needToProcess) {
@@ -39,9 +40,7 @@ class Worker(authorityMatcher: FilterTrait[HasLink],
             }
           }
           case Error(error: HttpError) => {
-            link.statusCode = error.errorCode
-            link.statusMessage = error.serverReply
-            sender ! SaveLink(link)
+            sender ! SaveLink(link.copy(statusCode = error.errorCode, statusMessage = error.serverReply))
           }
         }
       } catch {
