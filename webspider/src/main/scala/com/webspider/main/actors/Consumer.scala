@@ -56,7 +56,6 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
     }
 
     case LinkProcessingDone(link) => {
-      info("Processing the link <%s> is done".format(link))
       workersCount -= 1
     }
 
@@ -67,13 +66,13 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
     }
 
     case ShowStats => {
-      info("=" * 50)
+      logSeparator
       info("Stats")
-      info("=" * 50)
+      logSeparator
       info("Processed : %s".format(storage.storageSize()))
       info("Queued : %s".format(queue.queueSize()))
       info("Working actors %s".format(workersCount))
-      info("=" * 50)
+      logSeparator
     }
 
     case Terminated(ref) => {
@@ -82,17 +81,17 @@ class Consumer(task: Task, config: TaskConfiguration) extends Actor with LogHelp
   }
 
   def showResultsInfo() {
-    info("=" * 50)
+    logSeparator
     info("Finish task %s".format(task))
-    info("=" * 50)
+    logSeparator
     info("Processed : %s".format(storage.storageSize()))
     info("Queued : %s".format(queue.queueSize()))
     info("Time consumed : %s ms.".format(System.currentTimeMillis() - startTime))
-    info("=" * 50)
+    logSeparator
     storage.results().foreach(link => {
-      info("%s [%s]".format(link.link, link.statusCode))
+      info("%s [%s] [%s] ".format(link.link, link.contentType, link.statusCode))
     })
-    info("=" * 50)
+    logSeparator
   }
 
   private def processTask(task: Task) = {

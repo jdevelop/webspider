@@ -1,7 +1,7 @@
 package com.webspider.transport
 
 import java.io.InputStream
-import com.webspider.core.Link
+import com.webspider.core.{ContentType, Link}
 import com.webspider.transport.DocumentState.State
 
 /**
@@ -9,6 +9,6 @@ import com.webspider.transport.DocumentState.State
  */
 trait TransportTrait[T, L <: Link] {
 
-  def retrieveDocument(link: L): (InputStream, _ <: State)
+  def retrieveDocument(link: L): (InputStream, _ <: State, Option[ContentType], Map[String, String])
 
 }
