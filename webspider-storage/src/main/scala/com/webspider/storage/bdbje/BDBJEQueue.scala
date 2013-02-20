@@ -1,13 +1,13 @@
 package com.webspider.storage.bdbje
 
-import com.webspider.storage.{MustInitAndClose, LinkQueue}
-import com.webspider.core.{LinkStorageState, Link}
+import com.webspider.storage.{ MustInitAndClose, LinkQueue }
+import com.webspider.core.{ LinkStorageState, Link }
 import com.sleepycat.bind.tuple.TupleBinding
 import java.util.UUID
 import com.sleepycat.je._
 
 import Link.URLT
-import com.webspider.storage.LinkQueue.{GenericException, NoRecordInDatabase, AlreadyInProgress, PopError}
+import com.webspider.storage.LinkQueue.{ GenericException, NoRecordInDatabase, AlreadyInProgress, PopError }
 import org.apache.log4j.Logger
 import java.util.concurrent.atomic.AtomicLong
 
@@ -104,13 +104,14 @@ trait BDBJEQueue extends LinkQueue with MustInitAndClose {
     // mark all links "in progress" as queued.
     implicit def exception = (e: Throwable) => Left(e)
     withCursorInTransaction(inprogressDatabase) {
-      case (cursor, txn) => cursor.map(LockMode.RMW) {
-        case (key, value) =>
-          val link = linkSerializer.entryToObject(value)
-          linkSerializer.objectToEntry(link.copy(storageState = LinkStorageState.QUEUED), value)
-          value
-      }
-      Right()
+      case (cursor, txn) =>
+        cursor.map(LockMode.RMW) {
+          case (key, value) =>
+            val link = linkSerializer.entryToObject(value)
+            linkSerializer.objectToEntry(link.copy(storageState = LinkStorageState.QUEUED), value)
+            value
+        }
+        Right()
     }
   }
 
@@ -118,9 +119,7 @@ trait BDBJEQueue extends LinkQueue with MustInitAndClose {
     qSize.get()
   }
 
-  private def withCursorInTransaction[E, A](db: SecondaryDatabase)
-                                           (block: (SecondaryCursor, Transaction) => Either[E, A])
-                                           (implicit exception: Throwable => Either[E, A]) = {
+  private def withCursorInTransaction[E, A](db: SecondaryDatabase)(block: (SecondaryCursor, Transaction) => Either[E, A])(implicit exception: Throwable => Either[E, A]) = {
     import BDBJEQueue.LOG
     val txn = env.beginTransaction(null, null)
     val cursor = db.openCursor(txn, null)

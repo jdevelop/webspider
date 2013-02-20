@@ -17,8 +17,7 @@ object SimpleLinkNormalizer {
   private val defaultSchemaPorts = Map(
     "http" -> 80,
     "https" -> 443,
-    "ftp" -> 21
-  )
+    "ftp" -> 21)
 
 }
 
@@ -74,8 +73,7 @@ class SimpleLinkNormalizer extends RelativeLinkNormalizer {
     if (ABSOLUTE_URL_REGEX.matcher(relativeLink).find()) {
       val url = new URL(relativeLink);
       return prepareUrl(url)(
-        splitAndTransform(url.getPath)
-      )
+        splitAndTransform(url.getPath))
     }
     val parentLink = current.link
     val baseURL = parentLink.endsWith("/") match {
@@ -94,8 +92,7 @@ class SimpleLinkNormalizer extends RelativeLinkNormalizer {
       relativeLink.startsWith("/") match {
         case true => splitAndTransform(relativeLink)
         case false => splitAndTransform(url.getPath + relativeLink)
-      }
-    )
+      })
   }
 
 }

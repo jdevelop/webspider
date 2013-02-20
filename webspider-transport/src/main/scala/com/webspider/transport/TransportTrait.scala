@@ -1,7 +1,7 @@
 package com.webspider.transport
 
 import java.io.InputStream
-import com.webspider.core.{ContentType, Link}
+import com.webspider.core.{ ContentType, Link }
 import com.webspider.transport.DocumentState.State
 
 /**

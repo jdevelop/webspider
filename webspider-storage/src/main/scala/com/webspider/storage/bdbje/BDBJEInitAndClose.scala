@@ -43,18 +43,17 @@ trait BDBJEInitAndClose extends MustInitAndClose {
       val cfg = new SecondaryConfig().
         setAllowPopulate(true).
         setMultiKeyCreator(new SecondaryMultiKeyCreator {
-        def createSecondaryKeys(secondary: SecondaryDatabase,
-                                key: DatabaseEntry,
-                                data: DatabaseEntry,
-                                results: util.Set[DatabaseEntry]) {
-          if (linkSerializer.entryToObject(data).storageState == state) {
-            val dbe = new DatabaseEntry()
-            TupleBinding.getPrimitiveBinding(classOf[Long]).objectToEntry(System.currentTimeMillis(), dbe)
-            results.add(dbe)
+          def createSecondaryKeys(secondary: SecondaryDatabase,
+                                  key: DatabaseEntry,
+                                  data: DatabaseEntry,
+                                  results: util.Set[DatabaseEntry]) {
+            if (linkSerializer.entryToObject(data).storageState == state) {
+              val dbe = new DatabaseEntry()
+              TupleBinding.getPrimitiveBinding(classOf[Long]).objectToEntry(System.currentTimeMillis(), dbe)
+              results.add(dbe)
+            }
           }
-        }
-      }
-      )
+        })
       cfg.setAllowCreate(true)
       cfg
     }
@@ -64,11 +63,12 @@ trait BDBJEInitAndClose extends MustInitAndClose {
 
   override def close() {
     List(queueDatabase, relationDatabase, inprogressDatabase, mainDatabase, urlDatabase).foreach {
-      closable => try {
-        closable.close()
-      } catch {
-        case e: Exception => e.printStackTrace()
-      }
+      closable =>
+        try {
+          closable.close()
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
     }
     env.close()
   }

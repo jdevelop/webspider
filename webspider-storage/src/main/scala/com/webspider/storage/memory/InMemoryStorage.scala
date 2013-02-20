@@ -1,11 +1,11 @@
 package com.webspider.storage.memory
 
-import com.webspider.storage.{MustInitAndClose, LinkQueue, LinkStorage}
+import com.webspider.storage.{ MustInitAndClose, LinkQueue, LinkStorage }
 import com.webspider.core.utils.LogHelper
-import com.webspider.core.{LinkStorageState, Link}
-import collection.mutable.{Set, HashSet}
+import com.webspider.core.{ LinkStorageState, Link }
+import collection.mutable.{ Set, HashSet }
 import java.util.UUID
-import com.webspider.storage.LinkQueue.{NoRecordInDatabase, PopError}
+import com.webspider.storage.LinkQueue.{ NoRecordInDatabase, PopError }
 
 class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHelper with MustInitAndClose {
 

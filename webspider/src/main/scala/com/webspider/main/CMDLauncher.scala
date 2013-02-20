@@ -1,12 +1,11 @@
 package com.webspider.main
 
-import actors.{ProcessTask, Consumer}
+import actors.{ ProcessTask, Consumer }
 import config.TaskConfiguration
 import scopt.immutable.OptionParser
-import akka.actor.{Props, ActorSystem}
+import akka.actor.{ Props, ActorSystem }
 import com.webspider.core.Task
 import com.webspider.main.filter.StrictAuthorityFilter
-
 
 object CMDLauncher {
 
@@ -17,11 +16,10 @@ object CMDLauncher {
       def options = Seq(
         opt("u", "url", "url to process") { (v: String, c: CmdArgs) => c.copy(url = v) },
         intOpt("mw", "max-workers", "max worker processes") { (v: Int, c: CmdArgs) => c.copy(maxWorkers = v) },
-        intOpt("ml", "max-links", "maximum of processed links") { (v: Int, c: CmdArgs) => c.copy(maxLiks = v) }
-      )
+        intOpt("ml", "max-links", "maximum of processed links") { (v: Int, c: CmdArgs) => c.copy(maxLiks = v) })
     }
     parser.parse(args, CmdArgs()) map { cmdArgs: CmdArgs =>
-      if (cmdArgs.url.isEmpty){
+      if (cmdArgs.url.isEmpty) {
         parser.showUsage
         sys.exit(1)
       }

@@ -167,7 +167,6 @@
                             </goals>
                             <configuration>
                                 <alignParameters>true</alignParameters>
-                                <alignSingleLineCaseStatements>true</alignSingleLineCaseStatements>
                             </configuration>
                         </execution>
                     </executions>

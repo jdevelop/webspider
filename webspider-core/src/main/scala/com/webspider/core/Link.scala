@@ -21,15 +21,14 @@ case class Link(link: URLT,
                 storageState: LinkStorageState.Value = LinkStorageState.QUEUED,
                 statusCode: Int = -1,
                 statusMessage: String = "",
-                contentType: Option[ContentType] = None
-                )
-  extends HasLink
-  with HasUniqueId
-  with RedirectLink
-  with Headers
-  with ResultState[Int]
-  with LinkStorageState
-  with HasContentType{
+                contentType: Option[ContentType] = None)
+    extends HasLink
+    with HasUniqueId
+    with RedirectLink
+    with Headers
+    with ResultState[Int]
+    with LinkStorageState
+    with HasContentType {
 
   def this(lnk: String) = this(lnk, UUID.randomUUID())
 

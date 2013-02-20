@@ -1,7 +1,7 @@
 package com.webspider.storage
 
 import com.webspider.core.Link
-import com.webspider.storage.LinkQueue.{PopError, AddResult}
+import com.webspider.storage.LinkQueue.{ PopError, AddResult }
 import java.util.UUID
 
 object LinkQueue {

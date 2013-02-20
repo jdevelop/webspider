@@ -10,7 +10,7 @@ import collection.JavaConversions._
 abstract class HtmlParser(current: Link,
                           linkListener: LinkListener[Link],
                           expressions: List[(String, ExtractFunction)] = defaults)
-  extends DocumentParser[InputStream, Link] {
+    extends DocumentParser[InputStream, Link] {
 
   val linkNormalizer: RelativeLinkNormalizer
 

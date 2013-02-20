@@ -17,7 +17,6 @@ package object parser {
     ("link[href]", plainAttribute("href") _),
     ("input[src]", plainAttribute("src") _),
     ("embed[src]", plainAttribute("src") _), //flash embed movies
-    ("form[action]", plainAttribute("action") _)
-  )
+    ("form[action]", plainAttribute("action") _))
 
 }

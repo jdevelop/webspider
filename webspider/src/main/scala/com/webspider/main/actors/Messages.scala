@@ -1,6 +1,6 @@
 package com.webspider.main.actors
 
-import com.webspider.core.{Link, Task}
+import com.webspider.core.{ Link, Task }
 
 sealed trait Message
 

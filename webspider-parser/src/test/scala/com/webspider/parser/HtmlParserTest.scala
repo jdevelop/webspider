@@ -1,10 +1,10 @@
 package com.webspider.parser
 
 import link.ApacheCommonsLinkNormalizer
-import java.io.{FileInputStream, File}
+import java.io.{ FileInputStream, File }
 import com.webspider.core.Link
 
-import collection.mutable.{Map => MMap}
+import collection.mutable.{ Map => MMap }
 import org.specs2.mutable._
 
 class HtmlParserTest extends SpecificationWithJUnit {
@@ -19,10 +19,9 @@ class HtmlParserTest extends SpecificationWithJUnit {
   "Parser" should {
     "correctly find all links in given documents" in {
       val pairs = for (
-        pair@(link, doc, links) <- docsDir.listFiles().map {
+        pair @ (link, doc, links) <- docsDir.listFiles().map {
           case f: File => (new File(linkDir, f.getName), f, new File(linksDir, f.getName))
-        }
-        if (doc.exists() && links.exists() && link.exists())
+        } if (doc.exists() && links.exists() && link.exists())
       ) yield pair
       pairs.foreach {
         case (link, doc, links) =>
@@ -46,10 +45,8 @@ class HtmlParserTest extends SpecificationWithJUnit {
             case (k, v) => v == 0
           }
           assert(
-            hasZeroLinks.size == 0
-            ,
-            hasZeroLinks.keys.mkString(",")
-          )
+            hasZeroLinks.size == 0,
+            hasZeroLinks.keys.mkString(","))
       }
     }
   }
