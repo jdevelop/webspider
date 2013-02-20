@@ -40,6 +40,10 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.scalariform</groupId>
+                <artifactId>scalariform-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>
             </plugin>
