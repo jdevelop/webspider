@@ -1,7 +1,7 @@
 package com.webspider.main.config
 
-import com.webspider.storage.{LinkQueue, LinkStorage}
-import com.webspider.parser.link.{ApacheCommonsLinkNormalizer, RelativeLinkNormalizer}
+import com.webspider.storage.{ LinkQueue, LinkStorage }
+import com.webspider.parser.link.{ ApacheCommonsLinkNormalizer, RelativeLinkNormalizer }
 import com.webspider.main.filter.FilterTrait
 import com.webspider.core.HasLink
 

@@ -1,21 +1,21 @@
 package com.webspider.transport.http
 
-import com.webspider.transport.{DocumentState, TransportTrait}
+import com.webspider.transport.{ DocumentState, TransportTrait }
 import com.webspider.transport.http.HttpTransport.HttpError
-import com.webspider.core.{ContentType => ContentType, Link}
-import org.apache.http.client.methods.{HttpGet, HttpRequestBase}
+import com.webspider.core.{ ContentType => ContentType, Link }
+import org.apache.http.client.methods.{ HttpGet, HttpRequestBase }
 import java.net.URI
 import org.apache.http.client.HttpClient
 import com.webspider.transport.DocumentState.State
-import org.apache.http.{HttpStatus, HttpHeaders}
-import org.apache.http.entity.{ContentType => ApacheContentType}
+import org.apache.http.{ HttpStatus, HttpHeaders }
+import org.apache.http.entity.{ ContentType => ApacheContentType }
 
 object HttpTransport {
 
   case class HttpError(errorCode: Int, serverReply: String)
 
   case class Get[L <: Link](implicit val client: HttpClient)
-    extends HttpTransport[L] {
+      extends HttpTransport[L] {
 
     val method = new HttpGet()
 

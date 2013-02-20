@@ -1,9 +1,9 @@
 package com.webspider.storage.bdbje.persist
 
-import com.sleepycat.bind.tuple.{TupleInput, TupleOutput, TupleBinding}
+import com.sleepycat.bind.tuple.{ TupleInput, TupleOutput, TupleBinding }
 import java.util.UUID
 import java.nio.ByteBuffer
-import com.webspider.core.{LinkStorageState, Link}
+import com.webspider.core.{ LinkStorageState, Link }
 
 object LinkSerializer {
 

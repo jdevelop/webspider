@@ -1,11 +1,10 @@
 package com.webspider.main
 
 import com.webspider.core.Task
-import akka.actor.{Props, ActorSystem}
-import com.webspider.main.actors.{ProcessTask, Consumer}
+import akka.actor.{ Props, ActorSystem }
+import com.webspider.main.actors.{ ProcessTask, Consumer }
 import com.webspider.main.config.TaskConfiguration
 import filter.StrictAuthorityFilter
-
 
 object Launcher {
 

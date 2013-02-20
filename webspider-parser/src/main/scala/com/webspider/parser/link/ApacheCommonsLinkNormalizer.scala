@@ -1,7 +1,7 @@
 package com.webspider.parser.link
 
 import com.webspider.core.Link
-import org.apache.http.client.utils.{URIUtils}
+import org.apache.http.client.utils.{ URIUtils }
 import java.net.URI
 import com.webspider.core.utils.LogHelper
 

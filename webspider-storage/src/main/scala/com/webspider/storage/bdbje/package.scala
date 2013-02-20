@@ -1,7 +1,7 @@
 package com.webspider.storage
 
 import com.sleepycat.bind.tuple.TupleBinding
-import com.sleepycat.je.{OperationStatus, LockMode, Cursor, DatabaseEntry}
+import com.sleepycat.je.{ OperationStatus, LockMode, Cursor, DatabaseEntry }
 import org.apache.log4j.Logger
 
 package object bdbje {
@@ -50,7 +50,7 @@ package object bdbje {
 
   implicit def provideSimpleCursor(crs: Cursor) = new SimpleCursor(crs)
 
-  case class QuietCloseable(a: {def close(): Unit}) {
+  case class QuietCloseable(a: { def close(): Unit }) {
     def closeSilently(implicit LOG: Logger = null) {
       try {
         if (a != null)
@@ -61,6 +61,6 @@ package object bdbje {
     }
   }
 
-  implicit def provideSafeCloseable(a: {def close(): Unit}) = new QuietCloseable(a)
+  implicit def provideSafeCloseable(a: { def close(): Unit }) = new QuietCloseable(a)
 
 }

@@ -3,10 +3,10 @@ package com.webspider.main.actors
 import akka.actor.Actor
 import com.webspider.core.utils.LogHelper
 import com.webspider.transport.http.HttpTransport
-import com.webspider.core.{HasLink, Link}
+import com.webspider.core.{ HasLink, Link }
 import com.webspider.transport.DocumentState._
 import org.apache.http.impl.client.DefaultHttpClient
-import com.webspider.parser.{LinkListener, HtmlParser}
+import com.webspider.parser.{ LinkListener, HtmlParser }
 import com.webspider.parser.link.RelativeLinkNormalizer
 import org.apache.http.HttpStatus
 import com.webspider.transport.http.HttpTransport.HttpError

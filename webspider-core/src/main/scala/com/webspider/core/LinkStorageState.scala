@@ -1,6 +1,5 @@
 package com.webspider.core
 
-
 trait LinkStorageState {
 
   val storageState: LinkStorageState.Value
