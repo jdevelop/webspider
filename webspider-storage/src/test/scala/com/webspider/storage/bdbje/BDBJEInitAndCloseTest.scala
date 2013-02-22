@@ -13,6 +13,7 @@ class BDBJEInitAndCloseTest extends Specification with BDBJEInitAndClose with Te
 
   "BDBJEInitAndClose" should {
     "open database correctly" in {
+      cleanup
       init()
       val files = dbPath.listFiles()
       files.length must be greaterThan 0
