@@ -33,11 +33,11 @@ class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHe
     LinkQueue.Ok
   }
 
-  def init() {
+  override def init() {
     debug("Init storage")
   }
 
-  def close() {
+  override def close() {
     debug("Release storage")
     links.clear()
   }
