@@ -2,8 +2,8 @@ package com.webspider.storage
 
 trait MustInitAndClose {
 
-  def init()
+  def init() = {}
 
-  def close()
+  def close() = {}
 
 }

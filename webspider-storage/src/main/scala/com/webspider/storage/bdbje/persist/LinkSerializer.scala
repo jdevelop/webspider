@@ -2,29 +2,25 @@ package com.webspider.storage.bdbje.persist
 
 import com.sleepycat.bind.tuple.{TupleInput, TupleOutput, TupleBinding}
 import java.util.UUID
-import java.nio.ByteBuffer
 import com.webspider.core.{LinkStorageState, Link}
 
 object LinkSerializer {
 
   val keySerializer: TupleBinding[UUID] = new LinkKeySerializer
 
+  val linkUrlSerializer: TupleBinding[Link.URLT] = new LinkUrlSerializer
+
   val linkSerializer: TupleBinding[Link] = new LinkSerializer
 
   private[this] class LinkKeySerializer extends TupleBinding[UUID] {
 
     def entryToObject(src: TupleInput): UUID = {
-      val buf = Array[Byte](16)
-      src.read(buf, 0, 16)
-      val bb = ByteBuffer.wrap(buf)
-      new UUID(bb.getLong(), bb.getLong())
+      new UUID(src.readLong(), src.readLong())
     }
 
     def objectToEntry(src: UUID, out: TupleOutput) {
-      val bb = ByteBuffer.wrap(Array[Byte](16))
-      bb.putLong(src.getMostSignificantBits)
-      bb.putLong(src.getLeastSignificantBits)
-      out.write(bb.array())
+      out.writeLong(src.getMostSignificantBits)
+      out.writeLong(src.getLeastSignificantBits)
     }
 
   }

@@ -35,10 +35,10 @@ trait BDBJEInitAndClose extends MustInitAndClose {
   override def init() {
     cfg = new EnvironmentConfig().setAllowCreate(true).setTransactional(true)
     env = new Environment(dbPath, cfg)
-    def dbCfg = new DatabaseConfig().setAllowCreate(true).setTransactional(true);
-    mainDatabase = env.openDatabase(null, "mainDb", dbCfg)
-    urlDatabase = env.openDatabase(null, "urlDb", dbCfg)
-    relationDatabase = env.openDatabase(null, "relationDb", dbCfg)
+    def dbCfg() = new DatabaseConfig().setAllowCreate(true).setTransactional(true)
+    mainDatabase = env.openDatabase(null, "mainDb", dbCfg())
+    urlDatabase = env.openDatabase(null, "urlDb", dbCfg())
+    relationDatabase = env.openDatabase(null, "relationDb", dbCfg())
     def secondaryCfg(state: LinkStorageState.Value) = {
       val cfg = new SecondaryConfig().
         setAllowPopulate(true).
@@ -56,6 +56,7 @@ trait BDBJEInitAndClose extends MustInitAndClose {
       }
       )
       cfg.setAllowCreate(true)
+      cfg.setTransactional(true)
       cfg
     }
     queueDatabase = env.openSecondaryDatabase(null, "queueDb", mainDatabase, secondaryCfg(LinkStorageState.QUEUED))
