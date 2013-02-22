@@ -1,7 +1,6 @@
 package com.webspider.storage.bdbje
 
 import org.specs2.mutable.Specification
-import java.io.File
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
@@ -10,17 +9,12 @@ import org.specs2.runner.JUnitRunner
  * Date: 2/20/13
  */
 @RunWith(classOf[JUnitRunner])
-class BDBJEInitAndCloseTest extends Specification with BDBJEInitAndClose {
-
-  val folder = new File(new File(System.getProperty("java.io.tmpdir")), "bdbFolder")
-  folder.mkdirs() must be equalTo true
-
-  val dbPath = folder
+class BDBJEInitAndCloseTest extends Specification with BDBJEInitAndClose with TestFolderHelper {
 
   "BDBJEInitAndClose" should {
     "open database correctly" in {
       init()
-      val files = folder.listFiles()
+      val files = dbPath.listFiles()
       files.length must be greaterThan 0
 
       import collection.mutable.{Set => MSet}
@@ -40,7 +34,7 @@ class BDBJEInitAndCloseTest extends Specification with BDBJEInitAndClose {
         file => file.exists() must be equalTo true
         file.delete()
       }
-      folder.delete() must be equalTo true
+      dbPath.delete() must be equalTo true
     }
   }
 
