@@ -47,7 +47,7 @@ object Dependencies {
         "com.github.scopt" % "scopt_2.10" % "2.1.0",
         "org.jsoup" % "jsoup" % "1.6.3",  
         "junit" % "junit" % "4.9" % "test",
-        "org.specs2" %"specs2_2.10" % "1.13" % "test",        
+        "org.specs2" %"specs2_2.10" % "1.14" % "test",        
         "ch.qos.logback" % "logback-classic" % "1.0.0" % "runtime")
 }
 
