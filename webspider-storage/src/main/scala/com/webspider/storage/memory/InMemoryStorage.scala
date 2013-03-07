@@ -7,7 +7,7 @@ import collection.mutable.{Set, HashSet}
 import java.util.UUID
 import com.webspider.storage.LinkQueue.{NoRecordInDatabase, PopError}
 
-class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHelper with MustInitAndClose {
+class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHelper with MustInitAndClose[Unit] {
 
   var links: Set[Link] = new HashSet[Link]()
 
@@ -37,7 +37,7 @@ class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHe
     debug("Init storage")
   }
 
-  override def close() {
+  override def close(f: Unit => Unit = identity) {
     debug("Release storage")
     links.clear()
   }
