@@ -12,7 +12,7 @@ import com.webspider.core.LinkStorageState
  * User: Eugene Dzhurinsky
  * Date: 2/15/13
  */
-trait BDBJEInitAndClose extends MustInitAndClose {
+trait BDBJEInitAndClose extends MustInitAndClose[Environment] {
 
   val dbPath: File
 
@@ -33,12 +33,17 @@ trait BDBJEInitAndClose extends MustInitAndClose {
   val linkSerializer = LinkSerializer.linkSerializer
 
   override def init() {
+    dbPath.mkdirs()
     cfg = new EnvironmentConfig().setAllowCreate(true).setTransactional(true)
     env = new Environment(dbPath, cfg)
-    def dbCfg() = new DatabaseConfig().setAllowCreate(true).setTransactional(true)
+    def dbCfg(f: (DatabaseConfig) => DatabaseConfig = identity) = {
+      f(new DatabaseConfig().setAllowCreate(true).setTransactional(true))
+    }
     mainDatabase = env.openDatabase(null, "mainDb", dbCfg())
     urlDatabase = env.openDatabase(null, "urlDb", dbCfg())
-    relationDatabase = env.openDatabase(null, "relationDb", dbCfg())
+    relationDatabase = env.openDatabase(null, "relationDb", dbCfg {
+      case dbCfgLocal => dbCfgLocal.setSortedDuplicates(true)
+    })
     def secondaryCfg(state: LinkStorageState.Value) = {
       val cfg = new SecondaryConfig().
         setAllowPopulate(true).
@@ -63,14 +68,15 @@ trait BDBJEInitAndClose extends MustInitAndClose {
     inprogressDatabase = env.openSecondaryDatabase(null, "inProgress", mainDatabase, secondaryCfg(LinkStorageState.IN_PROGRESS))
   }
 
-  override def close() {
-    List(queueDatabase, relationDatabase, inprogressDatabase, mainDatabase, urlDatabase).foreach {
+  override def close(f: Environment => Unit) {
+    List(queueDatabase, relationDatabase, inprogressDatabase, mainDatabase, urlDatabase).filter(_ != null).foreach {
       closable => try {
         closable.close()
       } catch {
         case e: Exception => e.printStackTrace()
       }
     }
+    f(env)
     env.close()
   }
 

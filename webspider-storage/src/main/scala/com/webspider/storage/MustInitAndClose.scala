@@ -1,9 +1,9 @@
 package com.webspider.storage
 
-trait MustInitAndClose {
+trait MustInitAndClose[T] {
 
   def init() = {}
 
-  def close() = {}
+  def close(f: T => Unit) = {}
 
 }
