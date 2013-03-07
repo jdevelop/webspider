@@ -33,6 +33,7 @@ trait BDBJEInitAndClose extends MustInitAndClose[Environment] {
   val linkSerializer = LinkSerializer.linkSerializer
 
   override def init() {
+    dbPath.mkdirs()
     cfg = new EnvironmentConfig().setAllowCreate(true).setTransactional(true)
     env = new Environment(dbPath, cfg)
     def dbCfg(f: (DatabaseConfig) => DatabaseConfig = identity) = {
