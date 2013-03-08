@@ -8,16 +8,17 @@ import org.apache.http.entity.ContentType
 
 class HttpTransportTest extends SpecificationWithJUnit {
 
-  "HttpTransport" should {
+   "HttpTransport" should {
     "be able to access common URLs" in {
-      implicit val client = new DefaultHttpClient()
-
-      val (resultStream, state, contentType, headers) = HttpTransport.Get().retrieveDocument(new Link("http://www.google.com"))
-      assert(Stream.continually(resultStream.read()).takeWhile(_ != -1).map(_.toByte).toArray.length > 0)
-      assert(state === DocumentState.Ok())
-      assert(headers.size > 0)
-      contentType.map(_.mime) must beSome(ContentType.TEXT_HTML.getMimeType)
+      Thread.sleep(300)
+      "ex1".pp
+      ok
+    }
+    "be able to access common URLs --- 2" in {
+      "ex2".pp
+      ok
     }
   }
+
 
 }
