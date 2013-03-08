@@ -30,11 +30,7 @@ class BDBJEInitAndCloseTest extends Specification with BDBJEInitAndClose with Te
 
       names.size must be equalTo 0
 
-      files.foreach {
-        file => file.exists() must be equalTo true
-        file.delete()
-      }
-      dbPath.delete() must be equalTo true
+      close(identity)
     }
   }
 
