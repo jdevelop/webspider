@@ -8,16 +8,18 @@ import com.sleepycat.je._
 
 import Link.URLT
 import com.webspider.storage.LinkQueue.{GenericException, NoRecordInDatabase, AlreadyInProgress, PopError}
-import org.apache.log4j.Logger
 import java.util.concurrent.atomic.AtomicLong
+import grizzled.slf4j.Logger
 
 object BDBJEQueue {
 
-  implicit private val LOG: Logger = Logger.getLogger(classOf[BDBJEQueue])
+  val LOG = Logger(classOf[BDBJEQueue])
 
 }
 
-trait BDBJEQueue extends LinkQueue with MustInitAndClose {
+import BDBJEQueue.LOG
+
+trait BDBJEQueue extends LinkQueue with MustInitAndClose[Environment] {
 
   val qSize = new AtomicLong(0)
 
@@ -49,23 +51,38 @@ trait BDBJEQueue extends LinkQueue with MustInitAndClose {
     val cursor = urlDatabase.openCursor(txn, null)
     var result: LinkQueue.AddResult = null
     try {
+      val parentUUID = linkKeySerializer.objectToEntry(parent)
       val uuid = linkKeySerializer.objectToEntry(link.id)
       val url = linkUrlSerializer.objectToEntry(link.link)
       // check if link is in the queue or was processed either as redirect link or as regular one
+      LOG.debug("Pushing record '" + link.link + "'")
+
+      def putRelationData = relationDatabase.putNoDupData(txn, uuid, parentUUID) match {
+        case OperationStatus.SUCCESS =>
+          // TODO update link status here
+          LOG.debug("Relation added " + link.id + " => " + parent)
+          LinkQueue.Ok
+        case _ =>
+          LOG.warn("Relation exists " + link.id + " => " + parent + ", should retry")
+          LinkQueue.Retry
+      }
+
       cursor.putNoOverwrite(url, uuid) match {
         case OperationStatus.KEYEXIST => // if yes - then update parent link relation and that's it
-          val parentUUID = linkKeySerializer.objectToEntry(parent)
-          result = relationDatabase.putNoDupData(txn, uuid, parentUUID) match {
-            case OperationStatus.SUCCESS =>
-              // TODO update link status here
-              LinkQueue.Ok
-            case _ => LinkQueue.Retry
-          }
+          LOG.debug("Link exists '" + link.link + "'")
+          LOG.debug("Update relation " + link.id + " => " + parent)
+          result = putRelationData
         case OperationStatus.SUCCESS => // if no - then add link to the database
           val entry = linkSerializer.objectToEntry(link)
+          LOG.debug("Adding new link to queue: '" + link.link + "'")
           result = mainDatabase.putNoOverwrite(txn, url, entry) match {
-            case OperationStatus.SUCCESS => LinkQueue.Ok
-            case OperationStatus.KEYEXIST => LinkQueue.Retry
+            case OperationStatus.SUCCESS =>
+              LOG.debug("Link added to queue: " + link.id + " => " + link.link)
+              qSize.incrementAndGet()
+              putRelationData
+            case OperationStatus.KEYEXIST =>
+              LOG.warn("Link exists in the queue: " + link.id + " => " + link.link + ", retrying")
+              LinkQueue.Retry
           }
       }
     } finally {
@@ -73,7 +90,6 @@ trait BDBJEQueue extends LinkQueue with MustInitAndClose {
       result match {
         case LinkQueue.Ok =>
           txn.commit()
-          qSize.incrementAndGet()
         case _ => txn.abort()
       }
     }
@@ -128,7 +144,7 @@ trait BDBJEQueue extends LinkQueue with MustInitAndClose {
     try {
       result = block(cursor, txn)
     } catch {
-      case e: Exception => LOG.error(e, e); exception(e)
+      case e: Exception => LOG.error("Error in transaction", e); exception(e)
     } finally {
       cursor.closeSilently
       Option(txn).foreach {
