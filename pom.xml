@@ -160,7 +160,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.7.2</version>
                     <configuration>
-                        <argLine>-Dspecs2.console</argLine>
+                        <argLine>-Dspecs2.sequential -Dspecs2.console</argLine>
                         <useFile>true</useFile>
                         <disableXmlReport>true</disableXmlReport>
                         <includes>
