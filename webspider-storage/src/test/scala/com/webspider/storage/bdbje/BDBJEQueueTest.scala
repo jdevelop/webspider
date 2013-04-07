@@ -8,6 +8,7 @@ import persist.LinkSerializer
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import com.webspider.storage.LinkQueue
+import com.webspider.storage.LinkQueue.NoRecordInDatabase
 
 /**
  * User: Eugene Dzhurinsky
@@ -68,6 +69,9 @@ class BDBJEQueueTest extends Specification with BDBJEQueue with BDBJEInitAndClos
       newLinkEither.isRight must beTrue
       val newLink: Link = newLinkEither.right.get
       newLink.id must equalTo(link.id)
+      val shouldNotExist = pop()
+      shouldNotExist.isLeft must beTrue
+      shouldNotExist.left.get must equalTo(NoRecordInDatabase)
     }
 
   }

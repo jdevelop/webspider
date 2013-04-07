@@ -77,7 +77,7 @@ trait BDBJEQueue extends LinkQueue with MustInitAndClose[Environment] {
           LOG.debug("Update relation " + link.id + " => " + parent)
           result = putRelationData
         case OperationStatus.SUCCESS => // if no - then add link to the database
-          val entry = linkSerializer.objectToEntry(link)
+          val entry = linkSerializer.objectToEntry(link.copy(queuedAt = System.currentTimeMillis()))
           LOG.debug("Adding new link to queue: '" + link.link + "'")
           result = mainDatabase.putNoOverwrite(txn, url, entry) match {
             case OperationStatus.SUCCESS =>
