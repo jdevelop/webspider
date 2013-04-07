@@ -46,6 +46,10 @@ trait BDBJEQueue extends LinkQueue with MustInitAndClose[Environment] {
 
   val linkUrlSerializer: TupleBinding[URLT]
 
+  private[this] def dump(e: DatabaseEntry) = {
+    e.getSize.toString + "=>" + e.getData.map("%02X" format _).mkString
+  }
+
   def push(link: Link, parent: UUID) = {
     val txn = env.beginTransaction(null, null)
     val cursor = urlDatabase.openCursor(txn, null)
@@ -73,11 +77,12 @@ trait BDBJEQueue extends LinkQueue with MustInitAndClose[Environment] {
           LOG.debug("Update relation " + link.id + " => " + parent)
           result = putRelationData
         case OperationStatus.SUCCESS => // if no - then add link to the database
-          val entry = linkSerializer.objectToEntry(link)
+          val entry = linkSerializer.objectToEntry(link.copy(queuedAt = System.currentTimeMillis()))
           LOG.debug("Adding new link to queue: '" + link.link + "'")
           result = mainDatabase.putNoOverwrite(txn, url, entry) match {
             case OperationStatus.SUCCESS =>
               LOG.debug("Link added to queue: " + link.id + " => " + link.link)
+              LOG.debug("Key: " + dump(url))
               qSize.incrementAndGet()
               putRelationData
             case OperationStatus.KEYEXIST =>
@@ -101,13 +106,14 @@ trait BDBJEQueue extends LinkQueue with MustInitAndClose[Environment] {
     implicit def exception = (e: Throwable) => Left(GenericException(e))
     withCursorInTransaction(queueDatabase) {
       case (cursor, txn) => cursor.getFirst(LockMode.RMW).map {
-        case (key, value) =>
+        case (key, pKey, value) =>
           val link = linkSerializer.entryToObject(value)
+          LOG.debug("KEY: " + dump(pKey))
           // update it's state to "in progress"
           link.storageState match {
             case LinkStorageState.QUEUED =>
               val newLink = link.copy(storageState = LinkStorageState.IN_PROGRESS)
-              cursor.putCurrent(linkSerializer.objectToEntry(newLink))
+              mainDatabase.put(txn, pKey, linkSerializer.objectToEntry(newLink))
               Right(newLink)
             case LinkStorageState.IN_PROGRESS =>
               Left(AlreadyInProgress)

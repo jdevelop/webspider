@@ -1,8 +1,9 @@
 package com.webspider.storage
 
 import com.sleepycat.bind.tuple.TupleBinding
-import com.sleepycat.je.{OperationStatus, LockMode, Cursor, DatabaseEntry}
+import com.sleepycat.je._
 import org.apache.log4j.Logger
+import scala.Some
 
 package object bdbje {
 
@@ -17,6 +18,20 @@ package object bdbje {
   }
 
   implicit def provideSimpleSerializer[T](src: TupleBinding[T]) = SimpleSerializer(src)
+
+  case class SimpleSecondaryCursor(crs: SecondaryCursor) {
+
+    def getFirst(mode: LockMode) = {
+      val key = new DatabaseEntry()
+      val pKey = new DatabaseEntry()
+      val value = new DatabaseEntry()
+      crs.getFirst(key, pKey, value, mode) match {
+        case OperationStatus.SUCCESS => Some(key, pKey, value)
+        case _ => None
+      }
+    }
+
+  }
 
   case class SimpleCursor(crs: Cursor) {
 
@@ -49,6 +64,8 @@ package object bdbje {
   }
 
   implicit def provideSimpleCursor(crs: Cursor) = new SimpleCursor(crs)
+
+  implicit def provideSimpleSecondaryCursor(crs: SecondaryCursor) = new SimpleSecondaryCursor(crs)
 
   case class QuietCloseable(a: {def close(): Unit}) {
     def closeSilently(implicit LOG: Logger = null) {

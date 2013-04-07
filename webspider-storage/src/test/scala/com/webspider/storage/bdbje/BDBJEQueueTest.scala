@@ -8,6 +8,7 @@ import persist.LinkSerializer
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import com.webspider.storage.LinkQueue
+import com.webspider.storage.LinkQueue.NoRecordInDatabase
 
 /**
  * User: Eugene Dzhurinsky
@@ -21,41 +22,38 @@ class BDBJEQueueTest extends Specification with BDBJEQueue with BDBJEInitAndClos
   val linkKeySerializer: TupleBinding[UUID] = LinkSerializer.keySerializer
   val linkUrlSerializer: TupleBinding[Link.URLT] = LinkSerializer.linkUrlSerializer
 
-  lazy val bdbAround = new BeforeAfter {
+  trait bdbAround extends BeforeAfter {
 
     import collection.JavaConversions._
 
     def after: Any = {
-      println("after 1")
       close {
         envmt => envmt.getDatabaseNames.foreach(envmt.removeDatabase(null, _))
       }
       qSize.set(0)
-      println("after 2")
     }
 
     def before: Any = {
-      println("before 1")
       dbPath.mkdirs()
       init()
-      println("before 2")
     }
+
+    val uuid = UUID.randomUUID()
+    val parent = UUID.randomUUID()
+    val url = "http://123.com"
+    val link = Link(url, uuid)
+
   }
 
 
   "BDBJEQueue" should {
 
-    "update records count on database push" in bdbAround {
-      val uuid = UUID.randomUUID()
-      val parent = UUID.randomUUID()
-      val url = "http://123.com"
-      val link = Link(url, uuid)
+    "update records count on database push" in new bdbAround {
       push(link, parent)
       queueSize() must equalTo(1)
     }
 
-    "update record parent and keep single link" in bdbAround {
-      val link = Link("http://123.com", UUID.randomUUID())
+    "update record parent and keep single link" in new bdbAround {
       val linkCopy = Link("http://123.com", UUID.randomUUID())
       push(link, UUID.randomUUID()) must equalTo(LinkQueue.Ok)
       push(linkCopy, UUID.randomUUID()) must equalTo(LinkQueue.Ok)
@@ -64,6 +62,18 @@ class BDBJEQueueTest extends Specification with BDBJEQueue with BDBJEInitAndClos
       mainDatabase.count() must equalTo(1)
       relationDatabase.count() must equalTo(2)
     }
+
+    "populate record from queue and wait for another one" in new bdbAround {
+      push(link, UUID.randomUUID()) must equalTo(LinkQueue.Ok)
+      val newLinkEither = pop()
+      newLinkEither.isRight must beTrue
+      val newLink: Link = newLinkEither.right.get
+      newLink.id must equalTo(link.id)
+      val shouldNotExist = pop()
+      shouldNotExist.isLeft must beTrue
+      shouldNotExist.left.get must equalTo(NoRecordInDatabase)
+    }
+
   }
 
 }
