@@ -6,7 +6,7 @@ import com.sleepycat.je._
 import java.util
 import com.sleepycat.bind.tuple.TupleBinding
 import persist.LinkSerializer
-import com.webspider.core.LinkStorageState
+import com.webspider.core.{Link, LinkStorageState}
 
 /**
  * User: Eugene Dzhurinsky
@@ -52,9 +52,10 @@ trait BDBJEInitAndClose extends MustInitAndClose[Environment] {
                                 key: DatabaseEntry,
                                 data: DatabaseEntry,
                                 results: util.Set[DatabaseEntry]) {
-          if (linkSerializer.entryToObject(data).storageState == state) {
+          val linkObject: Link = linkSerializer.entryToObject(data)
+          if (linkObject.storageState == state) {
             val dbe = new DatabaseEntry()
-            TupleBinding.getPrimitiveBinding(classOf[Long]).objectToEntry(System.currentTimeMillis(), dbe)
+            TupleBinding.getPrimitiveBinding(classOf[Long]).objectToEntry(linkObject.queuedAt, dbe)
             results.add(dbe)
           }
         }
