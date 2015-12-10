@@ -1,28 +1,30 @@
 package com.webspider.parser
 
-import link.ApacheCommonsLinkNormalizer
-import java.io.{FileInputStream, File}
+import java.io.{File, FileInputStream}
+
 import com.webspider.core.Link
+import com.webspider.parser.link.ApacheCommonsLinkNormalizer
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.{FunSpec, MustMatchers}
 
-import collection.mutable.{Map => MMap}
-import org.specs2.mutable._
+import scala.collection.mutable.{Map => MMap}
 
-class HtmlParserTest extends SpecificationWithJUnit {
+@RunWith(classOf[JUnitRunner])
+class HtmlParserTest extends FunSpec with MustMatchers {
 
   val resources = if (new File("./webspider-parser").exists()) new File("./webspider-parser/src/test/resources/htmlparser/") else new File("src/test/resources/htmlparser/")
   val docsDir = new File(resources, "document")
   val linksDir = new File(resources, "links")
   val linkDir = new File(resources, "link")
 
-  println(resources.getAbsolutePath)
-
-  "Parser" should {
-    "correctly find all links in given documents" in {
+  describe("Parser") {
+    it("should correctly find all links in given documents") {
       val pairs = for (
         pair@(link, doc, links) <- docsDir.listFiles().map {
           case f: File => (new File(linkDir, f.getName), f, new File(linksDir, f.getName))
         }
-        if (doc.exists() && links.exists() && link.exists())
+        if doc.exists() && links.exists() && link.exists()
       ) yield pair
       pairs.foreach {
         case (link, doc, links) =>
@@ -46,9 +48,7 @@ class HtmlParserTest extends SpecificationWithJUnit {
             case (k, v) => v == 0
           }
           assert(
-            hasZeroLinks.size == 0
-            ,
-            hasZeroLinks.keys.mkString(",")
+            hasZeroLinks.size == 0, hasZeroLinks.keys.mkString(",")
           )
       }
     }

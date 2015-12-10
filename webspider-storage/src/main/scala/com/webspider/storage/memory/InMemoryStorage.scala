@@ -23,9 +23,10 @@ class InMemoryStorage(taskId: Int) extends LinkStorage with LinkQueue with LogHe
     }).getOrElse(Left(NoRecordInDatabase))
   }
 
-  def save(link: Link) {
+  def save(link: Link) = {
     links = links.filterNot(_.id == link.id)
     links += link.copy(storageState = LinkStorageState.PROCESSED)
+    LinkStorage.Add
   }
 
   def push(link: Link, parent: UUID) = {
