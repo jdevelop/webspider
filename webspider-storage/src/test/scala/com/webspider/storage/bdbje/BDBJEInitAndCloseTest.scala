@@ -1,21 +1,21 @@
 package com.webspider.storage.bdbje
 
-import org.specs2.mutable.Specification
 import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.scalatest.{MustMatchers, FunSpec}
+import org.scalatest.junit.JUnitRunner
 
 /**
- * User: Eugene Dzhurinsky
- * Date: 2/20/13
- */
+  * User: Eugene Dzhurinsky
+  * Date: 2/20/13
+  */
 @RunWith(classOf[JUnitRunner])
-class BDBJEInitAndCloseTest extends Specification with BDBJEInitAndClose with TestFolderHelper {
+class BDBJEInitAndCloseTest extends FunSpec with BDBJEInitAndClose with TestFolderHelper with MustMatchers {
 
-  "BDBJEInitAndClose" should {
-    "open database correctly" in {
+  describe("BDBJEInitAndClose") {
+    it("should open database correctly") {
       init()
       val files = dbPath.listFiles()
-      files.length must be greaterThan 0
+      files.length must be > 0
 
       import collection.mutable.{Set => MSet}
       import collection.JavaConversions._
@@ -24,11 +24,11 @@ class BDBJEInitAndCloseTest extends Specification with BDBJEInitAndClose with Te
 
       env.getDatabaseNames.foreach {
         name =>
-          names.contains(name) must be equalTo true
+          names.contains(name) must be(true)
           names -= name
       }
 
-      names.size must be equalTo 0
+      names.size must be(0)
 
       close(identity)
     }
