@@ -2,7 +2,7 @@ package com.webspider.parser
 
 import java.io.{File, FileInputStream}
 
-import com.webspider.core.Link
+import com.webspider.core.Resource
 import com.webspider.parser.link.ApacheCommonsLinkNormalizer
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
@@ -28,20 +28,20 @@ class HtmlParserTest extends FunSpec with MustMatchers {
       ) yield pair
       pairs.foreach {
         case (link, doc, links) =>
-          val url = new Link(io.Source.fromFile(link).getLines().next())
+          val url = new Resource(io.Source.fromFile(link).getLines().next())
           val linkMap: MMap[String, Int] = io.Source.fromFile(links).getLines().foldLeft(MMap[String, Int]()) {
             case (map, linkString) => map += (linkString -> 0)
           }
-          val listener = new LinkListener[Link] {
-            def linkFound(parent: Link, link: Link) {
+          val listener = new LinkListener {
+            def linkFound(link: String) {
               for (
-                count <- linkMap.get(link.link)
+                count <- linkMap.get(link)
               ) {
-                linkMap.update(link.link, count + 1)
+                linkMap.update(link, count + 1)
               }
             }
           }
-          new HtmlParser(url, listener) {
+          new HtmlParser(url.location, listener) {
             val linkNormalizer = new ApacheCommonsLinkNormalizer
           }.parse(new FileInputStream(doc))
           val hasZeroLinks = linkMap.filter {

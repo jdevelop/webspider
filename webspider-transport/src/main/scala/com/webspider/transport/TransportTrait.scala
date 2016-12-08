@@ -1,14 +1,30 @@
 package com.webspider.transport
 
 import java.io.InputStream
-import com.webspider.core.{ContentType, Link}
-import com.webspider.transport.DocumentState.State
+
+import com.webspider.core.{ContentType, HasLocation, Resource}
 
 /**
- * Defines methods to be used for retrieving documents.
- */
-trait TransportTrait[T, L <: Link] {
+  * Defines methods to be used for retrieving documents.
+  */
+object TransportTrait {
 
-  def retrieveDocument(link: L): (InputStream, _ <: State, Option[ContentType], Map[String, String])
+  type DocumentHandler[ErrorT] = Either[ErrorT, DocumentResult] ⇒ Unit
+
+  case class DocumentResult(is: InputStream, mbContentType: Option[ContentType], headers: Map[String, String])
+
+}
+
+trait TransportTrait {
+
+  type Error
+
+  import TransportTrait._
+
+  def retrieveDocument(link: HasLocation)(handler: DocumentHandler[Error]): Unit
+
+  def extractErrorCode(err: Error): Int
+
+  def extractErrorMessage(err: Error): String
 
 }

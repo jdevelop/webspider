@@ -1,8 +1,8 @@
 package com.webspider.storage.bdbje
 
 import org.junit.runner.RunWith
-import org.scalatest.{MustMatchers, FunSpec}
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.{FunSpec, MustMatchers}
 
 /**
   * User: Eugene Dzhurinsky
@@ -18,17 +18,8 @@ class BDBJEInitAndCloseTest extends FunSpec with BDBJEInitAndClose with TestFold
       files.length must be > 0
 
       import collection.mutable.{Set => MSet}
-      import collection.JavaConversions._
 
-      val names: MSet[String] = MSet() ++ List("inProgress", "mainDb", "queueDb", "relationDb", "urlDb")
-
-      env.getDatabaseNames.foreach {
-        name =>
-          names.contains(name) must be(true)
-          names -= name
-      }
-
-      names.size must be(0)
+      env.getDatabaseNames must contain only("inProgress", "queueDb", "urlDb")
 
       close(identity)
     }

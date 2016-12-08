@@ -1,14 +1,12 @@
 package com.webspider.storage
 
-import com.webspider.core.Link
-import com.webspider.storage.LinkQueue.{PopError, AddResult}
-import java.util.UUID
+import com.webspider.storage.PersistentQueue.{AddResult, PopError}
 
-object LinkQueue {
+object PersistentQueue {
 
-  sealed abstract class AddResult
+  sealed trait AddResult
 
-  case object Ok extends AddResult
+  case object Added extends AddResult
 
   case object Retry extends AddResult
 
@@ -22,11 +20,13 @@ object LinkQueue {
 
 }
 
-trait LinkQueue {
+trait PersistentQueue {
 
-  def push(link: Link, parent: UUID): AddResult
+  type QueueRecord
 
-  def pop(): Either[PopError, Link]
+  def push(link: QueueRecord): AddResult
+
+  def pop(): Either[PopError, QueueRecord]
 
   def reset()
 

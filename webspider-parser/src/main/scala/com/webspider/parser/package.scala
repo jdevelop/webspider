@@ -20,4 +20,24 @@ package object parser {
     ("form[action]", plainAttribute("action") _)
   )
 
+  abstract case class Document[T](links: List[T])
+
+  /**
+    * Defines methods to be user for document parsing.
+    */
+  trait DocumentParser[-S] {
+
+    type ParserResult
+
+    def parse(source: S): ParserResult
+
+  }
+
+  trait LinkListener {
+
+    def linkFound(link: String)
+
+  }
+
+
 }
