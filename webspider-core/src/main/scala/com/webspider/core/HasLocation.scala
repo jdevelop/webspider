@@ -3,8 +3,8 @@ package com.webspider.core
 /**
  * Declares than we do have a link somehow
  */
-trait HasLink {
+trait HasLocation {
 
-  val link: String
+  val location: String
 
 }

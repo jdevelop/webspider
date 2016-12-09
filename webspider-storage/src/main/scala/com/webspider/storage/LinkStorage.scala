@@ -1,6 +1,5 @@
 package com.webspider.storage
 
-import com.webspider.core.Link
 import com.webspider.storage.LinkStorage.SaveResult
 
 object LinkStorage {
@@ -15,9 +14,11 @@ object LinkStorage {
 
 trait LinkStorage {
 
-  def save(link: Link) : SaveResult
+  type LinkType
 
-  def results(): Iterable[Link]
+  def save(link: LinkType): SaveResult
+
+  def results(): Iterable[LinkType]
 
   def storageSize(): Int
 }

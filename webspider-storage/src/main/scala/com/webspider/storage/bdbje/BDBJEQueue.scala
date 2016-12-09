@@ -1,37 +1,37 @@
 package com.webspider.storage.bdbje
 
-import com.webspider.storage.{MustInitAndClose, LinkQueue}
-import com.webspider.core.{LinkStorageState, Link}
-import com.sleepycat.bind.tuple.TupleBinding
-import java.util.UUID
-import com.sleepycat.je._
-
-import Link.URLT
-import com.webspider.storage.LinkQueue.{GenericException, NoRecordInDatabase, AlreadyInProgress, PopError}
 import java.util.concurrent.atomic.AtomicLong
+
+import com.sleepycat.bind.tuple.{LongBinding, StringBinding}
+import com.sleepycat.je._
+import com.webspider.storage.PersistentQueue.{AlreadyInProgress, GenericException, NoRecordInDatabase, PopError}
+import com.webspider.storage.{HasStringKey, MustInitAndClose, PersistentQueue}
 import grizzled.slf4j.Logger
 
 object BDBJEQueue {
 
-  val LOG = Logger(classOf[BDBJEQueue])
+  val LOG = Logger(getClass)
 
 }
 
-import BDBJEQueue.LOG
+import com.webspider.storage.bdbje.BDBJEQueue.LOG
 
-trait BDBJEQueue extends LinkQueue with MustInitAndClose[Environment] {
+trait BDBJEQueue[T <: HasStringKey] extends PersistentQueue with MustInitAndClose[Environment] {
+
+  import com.webspider.storage.PersistenceSerializer
+
+  override type QueueRecord = T
+
+  protected val serializer: PersistenceSerializer[QueueRecord]
 
   val qSize = new AtomicLong(0)
 
   protected def env: Environment
 
-  // contains UUID -> Record mappings
-  protected def mainDatabase: Database
-
-  // Containts redirect URL -> UUID mapping
+  // Url -> Record
   protected def urlDatabase: Database
 
-  // Contains mappings UUID -> parent UUID
+  // Contains mappings record ID -> parent ID
   protected def relationDatabase: Database
 
   // holds queue of links
@@ -40,103 +40,89 @@ trait BDBJEQueue extends LinkQueue with MustInitAndClose[Environment] {
   // holds current "in-progress" links
   protected def inprogressDatabase: SecondaryDatabase
 
-  protected val linkKeySerializer: TupleBinding[UUID]
+  protected val linkKeySerializer = new StringBinding()
 
-  val linkSerializer: TupleBinding[Link]
-
-  val linkUrlSerializer: TupleBinding[URLT]
+  protected val idSerializer = new LongBinding
 
   private[this] def dump(e: DatabaseEntry) = {
     e.getSize.toString + "=>" + e.getData.map("%02X" format _).mkString
   }
 
-  def push(link: Link, parent: UUID) = {
+  override def push(link: QueueRecord) = {
+    val data = serializer.serialize(link)
+
     val txn = env.beginTransaction(null, null)
     val cursor = urlDatabase.openCursor(txn, null)
-    var result: LinkQueue.AddResult = null
+    var complete = false
     try {
-      val parentUUID = linkKeySerializer.objectToEntry(parent)
-      val uuid = linkKeySerializer.objectToEntry(link.id)
-      val url = linkUrlSerializer.objectToEntry(link.link)
+      val keyRec = linkKeySerializer.writeObjectToEntry(link.key)
+      val urlRec = FullDataBinding.writeObjectToEntry(DBEntry(Queued, System.currentTimeMillis(), link.key, Some(data)))
       // check if link is in the queue or was processed either as redirect link or as regular one
-      LOG.debug("Pushing record '" + link.link + "'")
+      LOG.debug("Pushing record '" + link.key + "'")
 
-      def putRelationData = relationDatabase.putNoDupData(txn, uuid, parentUUID) match {
-        case OperationStatus.SUCCESS =>
-          // TODO update link status here
-          LOG.debug("Relation added " + link.id + " => " + parent)
-          LinkQueue.Ok
-        case _ =>
-          LOG.warn("Relation exists " + link.id + " => " + parent + ", should retry")
-          LinkQueue.Retry
-      }
-
-      cursor.putNoOverwrite(url, uuid) match {
+      val opResult = cursor.putNoOverwrite(keyRec, urlRec) match {
         case OperationStatus.KEYEXIST => // if yes - then update parent link relation and that's it
-          LOG.debug("Link exists '" + link.link + "'")
-          LOG.debug("Update relation " + link.id + " => " + parent)
-          result = putRelationData
+          LOG.debug("Link exists '" + link.key + "'")
+          PersistentQueue.Added
         case OperationStatus.SUCCESS => // if no - then add link to the database
-          val entry = linkSerializer.objectToEntry(link.copy(queuedAt = System.currentTimeMillis()))
-          LOG.debug("Adding new link to queue: '" + link.link + "'")
-          result = mainDatabase.putNoOverwrite(txn, url, entry) match {
-            case OperationStatus.SUCCESS =>
-              LOG.debug("Link added to queue: " + link.id + " => " + link.link)
-              LOG.debug("Key: " + dump(url))
-              qSize.incrementAndGet()
-              putRelationData
-            case OperationStatus.KEYEXIST =>
-              LOG.warn("Link exists in the queue: " + link.id + " => " + link.link + ", retrying")
-              LinkQueue.Retry
-          }
+          qSize.incrementAndGet()
+          PersistentQueue.Added
+        case status ⇒
+          LOG.error(s"Can't process operation status ${status}")
+          PersistentQueue.Retry
       }
+
+      complete = true
+      opResult
     } finally {
-      cursor.close()
-      result match {
-        case LinkQueue.Ok =>
-          txn.commit()
-        case _ => txn.abort()
+      cursor.closeSilently
+      if (complete) {
+        txn.commitNoSync()
+      } else {
+        txn.abort()
       }
     }
-    result
   }
 
-  def pop(): Either[PopError, Link] = {
+  override def pop(): Either[PopError, QueueRecord] = {
     // take first link which from the queue
     implicit def exception = (e: Throwable) => Left(GenericException(e))
+
     withCursorInTransaction(queueDatabase) {
       case (cursor, txn) => cursor.getFirst(LockMode.RMW).map {
         case (key, pKey, value) =>
-          val link = linkSerializer.entryToObject(value)
+          val entry = FullDataBinding.entryToObject(value)
           LOG.debug("KEY: " + dump(pKey))
           // update it's state to "in progress"
-          link.storageState match {
-            case LinkStorageState.QUEUED =>
-              val newLink = link.copy(storageState = LinkStorageState.IN_PROGRESS)
-              mainDatabase.put(txn, pKey, linkSerializer.objectToEntry(newLink))
-              Right(newLink)
-            case LinkStorageState.IN_PROGRESS =>
+          entry.storageClass match {
+            case Queued ⇒
+              val newEntry = entry.copy(storageClass = InProgress)
+              urlDatabase.put(txn, pKey, FullDataBinding.writeObjectToEntry(newEntry))
+              Right(serializer.deserialize(newEntry.entity.get))
+            case InProgress =>
               Left(AlreadyInProgress)
           }
       }.getOrElse(Left(NoRecordInDatabase))
     }
   }
 
-  def reset() {
+  override def reset() {
     // mark all links "in progress" as queued.
     implicit def exception = (e: Throwable) => Left(e)
+
     withCursorInTransaction(inprogressDatabase) {
-      case (cursor, txn) => cursor.map(LockMode.RMW) {
-        case (key, value) =>
-          val link = linkSerializer.entryToObject(value)
-          linkSerializer.objectToEntry(link.copy(storageState = LinkStorageState.QUEUED), value)
-          value
-      }
-      Right()
+      case (cursor, txn) =>
+        cursor.map(LockMode.RMW) {
+          case (key, value) =>
+            val entry = FullDataBinding.entryToObject(value)
+            FullDataBinding.objectToEntry(entry.copy(storageClass = Queued), value)
+            value
+        }
+        Right(())
     }
   }
 
-  def queueSize(): Long = {
+  override def queueSize(): Long = {
     qSize.get()
   }
 

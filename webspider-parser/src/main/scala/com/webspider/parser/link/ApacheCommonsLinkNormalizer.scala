@@ -1,15 +1,15 @@
 package com.webspider.parser.link
 
-import com.webspider.core.Link
+import com.webspider.core.Resource
 import org.apache.http.client.utils.{URIUtils}
 import java.net.URI
 import com.webspider.core.utils.LogHelper
 
 class ApacheCommonsLinkNormalizer extends RelativeLinkNormalizer with LogHelper {
 
-  def normalize(current: Link, relativeLink: String): String = {
-    debug("Normalize %s - %s".format(current.link, removeAnchor(relativeLink)))
-    URIUtils.resolve(new URI(current.link), removeAnchor(relativeLink)).toString
+  def normalize(current: String, relativeLink: String): String = {
+    debug("Normalize %s - %s".format(current, removeAnchor(relativeLink)))
+    URIUtils.resolve(new URI(current), removeAnchor(relativeLink)).toString
   }
 
   def removeAnchor(url: String): String = {

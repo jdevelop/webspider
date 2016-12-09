@@ -3,8 +3,8 @@ package com.webspider.core
 /**
  * Defines redirect link.
  */
-trait RedirectLink {
+trait HasRedirect {
 
-  val redirectLink: Option[String]
+  val redirectLocation: Option[String]
 
 }

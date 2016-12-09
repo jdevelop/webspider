@@ -1,26 +1,77 @@
 package com.webspider.storage.bdbje
 
-import com.sleepycat.bind.tuple.TupleBinding
-import java.util.UUID
-import com.webspider.core.Link
-import org.scalatest.{BeforeAndAfter, MustMatchers, FunSpec}
-import org.scalatest.junit.JUnitRunner
-import persist.LinkSerializer
+import java.io._
+import java.nio.ByteBuffer
+import java.util
+import java.util.Collections
+import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, TimeUnit}
+import java.util.function.BiFunction
+import java.util.zip.GZIPInputStream
+
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.io.{Input, Output}
+import com.twitter.chill.ScalaKryoInstantiator
+import com.webspider.storage.PersistentQueue.NoRecordInDatabase
+import com.webspider.storage.bdbje.BDBJEQueueTest.SampleURL
+import com.webspider.storage.{HasStringKey, PersistenceSerializer, PersistentQueue}
+import org.apache.commons.io.FileUtils
 import org.junit.runner.RunWith
-import com.webspider.storage.LinkQueue
-import com.webspider.storage.LinkQueue.NoRecordInDatabase
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.{BeforeAndAfter, FunSpec, MustMatchers}
+
+import scala.concurrent.{Await, Future}
 
 /**
   * User: Eugene Dzhurinsky
   * Date: 2/21/13
   */
+object BDBJEQueueTest {
+
+  case class SampleURL(url: String, data: String, code: Int) extends HasStringKey {
+    override val key = url
+  }
+
+  private val KryoSerializer = new ScalaKryoInstantiator().newKryo()
+
+}
+
 @RunWith(classOf[JUnitRunner])
-class BDBJEQueueTest extends FunSpec with BDBJEQueue with BDBJEInitAndClose with TestFolderHelper with MustMatchers with BeforeAndAfter {
+class BDBJEQueueTest
+  extends FunSpec
+    with MustMatchers
+    with BeforeAndAfter {
 
-  val linkKeySerializer: TupleBinding[UUID] = LinkSerializer.keySerializer
-  val linkUrlSerializer: TupleBinding[Link.URLT] = LinkSerializer.linkUrlSerializer
+  trait bdbAround extends BDBJEQueue[SampleURL]
+    with TestFolderHelper
+    with BDBJEInitAndClose {
 
-  trait bdbAround {
+    override protected val serializer: PersistenceSerializer[SampleURL] = new PersistenceSerializer[SampleURL] {
+      override def serialize(src: SampleURL): ByteBuffer = {
+        val os = new ByteArrayOutputStream()
+        val dataOut = new DataOutputStream(os)
+        dataOut.writeUTF(src.url)
+        dataOut.writeUTF(src.data)
+        dataOut.writeInt(src.code)
+        dataOut.flush()
+        dataOut.close()
+        os.flush()
+        val bb = ByteBuffer.allocate(os.size())
+        bb.put(os.toByteArray)
+        bb.flip()
+        os.close()
+        bb
+      }
+
+      override def deserialize(src: ByteBuffer): SampleURL = {
+        val is = new ByteArrayInputStream(src.array(), src.arrayOffset(), src.capacity())
+        val dataInput = new DataInputStream(is)
+        SampleURL(
+          dataInput.readUTF(),
+          dataInput.readUTF(),
+          dataInput.readInt()
+        )
+      }
+    }
 
     import collection.JavaConversions._
 
@@ -29,6 +80,7 @@ class BDBJEQueueTest extends FunSpec with BDBJEQueue with BDBJEInitAndClose with
         envmt ⇒ envmt.getDatabaseNames.foreach(envmt.removeDatabase(null, _))
       }
       qSize.set(0)
+      FileUtils.deleteDirectory(dbPath)
     }
 
     def before: Any = {
@@ -36,17 +88,18 @@ class BDBJEQueueTest extends FunSpec with BDBJEQueue with BDBJEInitAndClose with
       init()
     }
 
-    val uuid = UUID.randomUUID()
-    val parent = UUID.randomUUID()
     val url = "http://123.com"
-    val link = Link(url, uuid)
+    val link = SampleURL(url, "Test here", 200)
 
     def testBody: Unit
 
     def run(): Unit = {
       before
-      testBody
-      after
+      try {
+        testBody
+      } finally {
+        after
+      }
     }
 
   }
@@ -56,40 +109,85 @@ class BDBJEQueueTest extends FunSpec with BDBJEQueue with BDBJEInitAndClose with
 
     it("should update records count on database push") {
       new bdbAround {
+
         override def testBody: Unit = {
-          push(link, parent)
+          push(link)
           queueSize() must be(1)
         }
-      }
+      }.run
     }
 
-    it("should update record parent and keep single link") {
+    it("should populate record from queue") {
       new bdbAround {
         override def testBody {
-          val linkCopy = Link("http://123.com", UUID.randomUUID())
-          push(link, UUID.randomUUID()) must be(LinkQueue.Ok)
-          push(linkCopy, UUID.randomUUID()) must be(LinkQueue.Ok)
-          urlDatabase.count() must be(1)
-          queueSize() must be(1)
-          mainDatabase.count() must be(1)
-          relationDatabase.count() must be(2)
-        }
-      }
-    }
-
-    it("should populate record from queue and wait for another one") {
-      new bdbAround {
-        override def testBody {
-          push(link, UUID.randomUUID()) must be(LinkQueue.Ok)
+          push(link) must be(PersistentQueue.Added)
           val newLinkEither = pop()
           newLinkEither.isRight must be(true)
-          val newLink: Link = newLinkEither.right.get
-          newLink.id must be(link.id)
+          val newLink = newLinkEither.right.get
+          newLink must be(link)
           val shouldNotExist = pop()
           shouldNotExist.isLeft must be(true)
           shouldNotExist.left.get must be(NoRecordInDatabase)
         }
-      }
+      }.run
+    }
+
+    it("should push records concurrently") {
+      new bdbAround {
+        override def testBody {
+          import org.scalacheck.Prop.forAll
+          import org.scalacheck._
+          val is = new GZIPInputStream(getClass.getResourceAsStream("/urlz.10k.gz"))
+          val urlsData = io.Source.fromInputStream(is, "UTF8").getLines().toSeq
+          println(urlsData.length)
+
+          implicit val noUrlsShrink = Shrink.shrinkAny[String]
+          implicit val noCodesShrink = Shrink.shrinkAny[Int]
+
+          val urlsGen = Gen.oneOf(urlsData)
+          val codesGen = Gen.choose(200, 500)
+
+          import scala.concurrent.ExecutionContext.Implicits.global
+
+          val checkSet: ConcurrentHashMap[String, List[Int]] = new ConcurrentHashMap[String, List[Int]]()
+
+          val futures = (1 to 10) map {
+            case _ ⇒
+              Future {
+                forAll(urlsGen, codesGen) {
+                  case (urlStr, code) ⇒
+                    push(SampleURL(urlStr, "noop", code))
+                    checkSet.compute(urlStr, new BiFunction[String, List[Int], List[Int]] {
+                      override def apply(t: String, u: List[Int]): List[Int] = {
+                        if (u == null) {
+                          List(code)
+                        } else {
+                          code :: u
+                        }
+                      }
+                    })
+                    true
+                }.check(Test.Parameters.default.withMinSuccessfulTests(1000))
+              }
+          }
+
+          import concurrent.duration._
+          Await.result(Future.sequence(futures), 2 minutes)
+
+          Iterator.continually(pop()).takeWhile(_.isRight) foreach {
+            case Right(rec) ⇒
+              val cached = checkSet.get(rec.key)
+              cached must not be null
+              cached must contain(rec.code)
+              checkSet.remove(rec.key)
+            case _ ⇒ fail("No records")
+          }
+
+          checkSet.isEmpty must be(true)
+
+        }
+      }.run
+
     }
 
   }

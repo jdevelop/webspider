@@ -1,12 +1,12 @@
 package com.webspider.transport.http
 
-import com.webspider.core.Link
-import com.webspider.transport.DocumentState
+import com.webspider.core.Resource
+import com.webspider.transport.TransportTrait.DocumentResult
 import org.apache.http.entity.ContentType
 import org.apache.http.impl.client.DefaultHttpClient
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.{ShouldMatchers, FunSpec}
+import org.scalatest.{FunSpec, ShouldMatchers}
 
 @RunWith(classOf[JUnitRunner])
 class HttpTransportTest extends FunSpec with ShouldMatchers {
@@ -15,11 +15,13 @@ class HttpTransportTest extends FunSpec with ShouldMatchers {
     it("should be able to access common URLs") {
       implicit val client = new DefaultHttpClient()
 
-      val (resultStream, state, contentType, headers) = HttpTransport.Get().retrieveDocument(new Link("http://www.google.com"))
-      assert(Stream.continually(resultStream.read()).takeWhile(_ != -1).map(_.toByte).toArray.length > 0)
-      assert(state === DocumentState.Ok())
-      assert(headers.size > 0)
-      contentType.map(_.mime) should be(Some(ContentType.TEXT_HTML.getMimeType))
+      HttpTransport.Get(client).retrieveDocument(new Resource("http://www.google.com")) {
+        case Right(DocumentResult(resultStream, contentType, headers)) ⇒
+          Stream.continually(resultStream.read()).takeWhile(_ != -1).map(_.toByte).toArray.length should be > 0
+          headers.nonEmpty should be(true)
+          contentType.map(_.mime) should be(Some(ContentType.TEXT_HTML.getMimeType))
+        case _ ⇒ fail()
+      }
     }
   }
 

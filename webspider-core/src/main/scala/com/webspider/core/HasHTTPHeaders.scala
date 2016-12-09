@@ -3,7 +3,7 @@ package com.webspider.core
 /**
  * Holds headers of a link.
  */
-trait Headers {
+trait HasHTTPHeaders {
 
   val requestHeaders: Map[String, String]
 

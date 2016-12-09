@@ -1,6 +1,6 @@
 package com.webspider.parser.link
 
-import com.webspider.core.Link
+import com.webspider.core.Resource
 import java.util.regex.Pattern
 import java.net.URL
 
@@ -29,7 +29,7 @@ class SimpleLinkNormalizer extends RelativeLinkNormalizer {
 
   import SimpleLinkNormalizer._
 
-  override def normalize(current: Link, relativeLink: String): String = {
+  override def normalize(current: String, relativeLink: String): String = {
 
     def wipeLevelUps(items: List[String], urlPart: String) =
       urlPart match {
@@ -72,20 +72,19 @@ class SimpleLinkNormalizer extends RelativeLinkNormalizer {
     }
 
     if (ABSOLUTE_URL_REGEX.matcher(relativeLink).find()) {
-      val url = new URL(relativeLink);
+      val url = new URL(relativeLink)
       return prepareUrl(url)(
         splitAndTransform(url.getPath)
       )
     }
-    val parentLink = current.link
-    val baseURL = parentLink.endsWith("/") match {
-      case true => parentLink
-      case _ => (parentLink.lastIndexOf('/'), parentLink.lastIndexOf("://")) match {
+    val baseURL = current.endsWith("/") match {
+      case true => current
+      case _ => (current.lastIndexOf('/'), current.lastIndexOf("://")) match {
         case (slashIdx, protoIdx) => slashIdx > -1 match {
-          case true if slashIdx - 2 == protoIdx => parentLink + "/"
-          case false => parentLink.substring(0, slashIdx + 1)
+          case true if slashIdx - 2 == protoIdx => current + "/"
+          case false => current.substring(0, slashIdx + 1)
         }
-        case _ => throw NotALinkExcepton("Wrong link type: %1$s".format(parentLink))
+        case _ => throw NotALinkExcepton("Wrong link type: %1$s".format(current))
       }
     }
     val url = new URL(baseURL)
