@@ -5,6 +5,6 @@ package com.webspider.parser.link
   */
 trait RelativeLinkNormalizer {
 
-  def normalize(current: String, relativeLink: String): String
+  def normalize(current: String, relativeLink: String): Either[String, String]
 
 }

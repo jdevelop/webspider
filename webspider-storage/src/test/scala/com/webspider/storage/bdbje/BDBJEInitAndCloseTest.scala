@@ -17,8 +17,6 @@ class BDBJEInitAndCloseTest extends FunSpec with BDBJEInitAndClose with TestFold
       val files = dbPath.listFiles()
       files.length must be > 0
 
-      import collection.mutable.{Set => MSet}
-
       env.getDatabaseNames must contain only("inProgress", "queueDb", "urlDb")
 
       close(identity)

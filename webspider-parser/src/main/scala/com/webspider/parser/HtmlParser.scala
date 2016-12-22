@@ -1,11 +1,14 @@
 package com.webspider.parser
 
 import java.io.InputStream
-import com.webspider.core.Resource
-import link.RelativeLinkNormalizer
+
+import com.webspider.core.utils.LogHelper
+import com.webspider.parser.link.RelativeLinkNormalizer
 import org.jsoup.Jsoup
 
-import collection.JavaConversions._
+import scala.collection.JavaConversions._
+
+object HtmlParser extends LogHelper
 
 abstract class HtmlParser(current: String,
                           linkListener: LinkListener,
@@ -23,7 +26,12 @@ abstract class HtmlParser(current: String,
       (exp, attr) <- expressions;
       link <- doc.select(exp)
     ) {
-      linkListener.linkFound(linkNormalizer.normalize(current, attr(link)))
+      linkNormalizer.normalize(current, attr(link)) match {
+        case Left(err) ⇒
+          HtmlParser.error(err)
+        case Right(resource) ⇒
+          linkListener.linkFound(resource)
+      }
     }
   }
 

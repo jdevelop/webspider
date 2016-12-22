@@ -4,7 +4,7 @@ import org.apache.log4j.Logger
 
 trait LogHelper {
 
-  lazy val logger = Logger.getLogger(this.getClass.getName)
+  lazy val logger = Logger.getLogger(this.getClass)
 
   def info(msg: => Any) {
     if (logger.isInfoEnabled) logger.info(msg)
