@@ -2,17 +2,16 @@ package com.webspider.agent.shared
 
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
-import akka.actor.{Actor, ActorPath, ActorSystem, Cancellable, Props}
+import akka.actor.{Actor, ActorPath, ActorSystem, Cancellable, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.routing.{Broadcast, RoundRobinPool}
 import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import com.webspider.agent.shared.ActorProtocolDefinition.TaskTypesDefinition
-import org.apache.log4j.{BasicConfigurator, Level, Logger}
 import org.junit.runner.RunWith
 import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FunSpecLike, ShouldMatchers}
+import org.scalatest.{BeforeAndAfterAll, FunSpecLike, ShouldMatchers}
 
 import scala.collection.mutable
 
@@ -72,6 +71,7 @@ object ActorProtocolDefinitionTest {
 class ActorProtocolDefinitionTest extends TestKit(ActorSystem("TestProtocol"))
   with FunSpecLike
   with ImplicitSender
+  with BeforeAndAfterAll
   with ShouldMatchers {
 
   import ActorProtocolDefinitionTest._
@@ -210,10 +210,85 @@ class ActorProtocolDefinitionTest extends TestKit(ActorSystem("TestProtocol"))
       * as a result - all the messages should be processed from the queue, no matter how many actors failed to process them
       */
     it("should test 1 producer - multiple consumers, some failures") {
-      pending
+      val queue = strings.foldLeft(mutable.Queue[String]()) {
+        case (q, m) ⇒
+          q.enqueue(m)
+          q
+      }
+
+      val results = mutable.Queue[(String, String)]()
+      val errors = mutable.Queue[String]()
+
+      val expectedInvocations = new CountDownLatch(strings.size)
+
+      val producer = system.actorOf(Props(
+        new TestProducerActor(queue, results, errors, expectedInvocations) {
+
+          def initHandler: Receive = {
+            case path: ActorPath ⇒
+              val actorFor = context.system.actorSelection(path)
+              actorFor.!(Broadcast(ActorProtocolDefinition.Messages.ProtocolBeacon))(self)
+          }
+
+          override def receive: Receive = initHandler orElse super.receive
+
+        }), "Producer1"
+      )
+
+      import scala.concurrent.duration._
+
+      val decider: SupervisorStrategy.Decider = {
+        case x: Exception ⇒
+          SupervisorStrategy.Restart
+      }
+
+      val groupStrategy = OneForOneStrategy.apply(-1, Duration.Inf, true)(decider)
+
+      val consumer = system.actorOf(Props(
+        new Actor with ActorProtocolDefinition.ConsumerActorTrait with TestTaskTypes {
+
+          var i = 0
+
+          override def receive: Receive = consumePrototype(timeout = Timeout(1 second))
+
+          override protected def payloadAction(task: String): Either[String, (String, String)] = {
+            if (i == 1) {
+              i = 0
+              throw new Exception("OMG")
+            } else {
+              i = 1
+              Right((task, self.path.toString))
+            }
+          }
+        }
+
+      ).withRouter(RoundRobinPool(5, supervisorStrategy = groupStrategy)), "Consumer1")
+
+      producer ! consumer.path
+
+      val allDone = expectedInvocations.await(5, TimeUnit.SECONDS)
+
+      println(allDone)
+
+      if (!allDone) {
+        expectedInvocations.getCount should be(0L)
+      }
+
+
+      strings.length should be(results.length)
+
+      strings should contain theSameElementsAs results.map(_._1)
+      errors should be(empty)
+
+      val distinctActorPaths = results.map(_._2).distinct
+      distinctActorPaths.length should be(5)
+
     }
 
   }
 
+  override protected def afterAll(): Unit = {
+    system.terminate()
+  }
 
 }

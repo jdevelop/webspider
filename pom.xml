@@ -56,6 +56,18 @@
       </dependency>
 
       <dependency>
+        <groupId>com.typesafe.akka</groupId>
+        <artifactId>akka-cluster-tools_${scala.base}</artifactId>
+        <version>${akka.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.typesafe.akka</groupId>
+        <artifactId>akka-cluster_${scala.base}</artifactId>
+        <version>${akka.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>4.2.1</version>

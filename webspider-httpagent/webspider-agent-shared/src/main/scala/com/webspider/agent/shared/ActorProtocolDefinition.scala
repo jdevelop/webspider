@@ -3,10 +3,9 @@ package com.webspider.agent.shared
 import akka.actor.{Actor, ActorRef, Terminated}
 import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
-import com.webspider.agent.shared.ActorProtocolDefinition.Messages.{NoTask, PullTaskPayload}
+import com.webspider.agent.shared.ActorProtocolDefinition.Messages.{NoTask, PullTaskPayload, TaskError}
 
 import scala.collection.mutable
-import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -37,6 +36,8 @@ object ActorProtocolDefinition {
     case class TaskResult[R](result: R) extends Protocol
 
     case class TaskError[E](error: E) extends Protocol
+
+    case class TaskFailure(error: Exception) extends Protocol
 
     case object NoTask extends Protocol
 
@@ -94,8 +95,7 @@ object ActorProtocolDefinition {
         enqueueTask(task)
       case Terminated(ref) ⇒
         ProducerLog.info(s"Actor terminated ${ref}")
-        val task = workers.remove(ref)
-        task.foreach {
+        workers.remove(ref).foreach {
           t ⇒
             ProducerLog.info(s"Enqueue task ${t}")
             enqueueTask(t)
@@ -105,11 +105,18 @@ object ActorProtocolDefinition {
         processResponse(Right(res))
         ProducerLog.trace(s"Sending beacon to $sender")
         context unwatch ref
+        workers.remove(ref)
         handleNewTaskRequest(ref)
-      case (ref: ActorRef,Messages.TaskError(err: ErrorT)) ⇒
+      case (ref: ActorRef, Messages.TaskError(err: ErrorT)) ⇒
         ProducerLog.warn(s"Received error from ${sender} ⇒ $err")
         processResponse(Left(err))
         context unwatch ref
+        workers.remove(ref)
+        handleNewTaskRequest(ref)
+      case (ref: ActorRef, Messages.TaskFailure(err: Exception)) ⇒
+        ProducerLog.warn(s"Received failure from ${sender} ⇒ $err")
+        context unwatch ref
+        workers.remove(ref).foreach(enqueueTask)
         handleNewTaskRequest(ref)
     }
 
@@ -145,9 +152,12 @@ object ActorProtocolDefinition {
             ConsumerLog.info("No task received")
           // okay, no tasks for us
           case Success(pl: Messages.PullTaskPayload[TaskT]) ⇒
-            val response: Messages.Protocol = payloadAction(pl.task) match {
-              case Right(res: ResultT) ⇒ Messages.TaskResult(res)
-              case Left(err: ErrorT) ⇒ Messages.TaskError(err)
+            val response: Messages.Protocol = Try(payloadAction(pl.task)) match {
+              case Success(Right(res: ResultT)) ⇒ Messages.TaskResult(res)
+              case Success(Left(err: ErrorT)) ⇒ Messages.TaskError(err)
+              case Failure(exc: Exception) ⇒
+                ConsumerLog.error("Can't process message payload", exc)
+                Messages.TaskFailure(exc)
             }
             memoSender.?(self -> response).mapTo[Messages.Protocol].onComplete(handler)
           case Failure(e: AskTimeoutException) ⇒
