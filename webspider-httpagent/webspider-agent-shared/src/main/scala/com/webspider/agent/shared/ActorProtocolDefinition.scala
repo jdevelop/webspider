@@ -64,10 +64,10 @@ object ActorProtocolDefinition {
         ProducerLog.trace(s"New task request from ${sender}")
         nextTask.foreach {
           task ⇒
-            ProducerLog.trace(s"Sending ${task} to ${sender}")
-            sender ! PullTaskPayload(task)
+            ProducerLog.info(s"Sending ${task} to ${sender}")
             context.watch(remoteRef)
             workers += remoteRef -> task
+            sender ! PullTaskPayload(task)
         }
       } else {
         ProducerLog.trace("No task available")
@@ -94,7 +94,7 @@ object ActorProtocolDefinition {
         }
         enqueueTask(task)
       case Terminated(ref) ⇒
-        ProducerLog.info(s"Actor terminated ${ref}")
+        ProducerLog.error(s"Actor terminated ${ref}")
         workers.remove(ref).foreach {
           t ⇒
             ProducerLog.info(s"Enqueue task ${t}")

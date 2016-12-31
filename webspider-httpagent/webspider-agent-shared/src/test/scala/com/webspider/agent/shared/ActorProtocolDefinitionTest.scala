@@ -1,25 +1,29 @@
 package com.webspider.agent.shared
 
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
-import akka.actor.{Actor, ActorPath, ActorSystem, Cancellable, OneForOneStrategy, Props, SupervisorStrategy}
+import akka.actor.{Actor, ActorPath, ActorSystem, Cancellable, Kill, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.routing.{Broadcast, RoundRobinPool}
-import akka.testkit.{ImplicitSender, TestKit}
+import akka.testkit.TestKit
 import akka.util.Timeout
-import com.webspider.agent.shared.ActorProtocolDefinition.TaskTypesDefinition
+import com.webspider.agent.shared.ActorProtocolDefinition.{Messages, TaskTypesDefinition}
 import org.junit.runner.RunWith
 import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.{BeforeAndAfterAll, FunSpecLike, ShouldMatchers}
+import org.scalatest.{BeforeAndAfterAll, FunSpec, ShouldMatchers}
 
 import scala.collection.mutable
+import scala.concurrent.Await
 
 /**
   * User: Eugene Dzhurinsky
   * Date: 12/16/16
   */
 object ActorProtocolDefinitionTest {
+
+  val system = ActorSystem("TestProtocol")
 
   trait TestTaskTypes extends TaskTypesDefinition {
     override type TaskT = String
@@ -68,9 +72,7 @@ object ActorProtocolDefinitionTest {
 }
 
 @RunWith(classOf[JUnitRunner])
-class ActorProtocolDefinitionTest extends TestKit(ActorSystem("TestProtocol"))
-  with FunSpecLike
-  with ImplicitSender
+class ActorProtocolDefinitionTest extends FunSpec
   with BeforeAndAfterAll
   with ShouldMatchers {
 
@@ -119,7 +121,9 @@ class ActorProtocolDefinitionTest extends TestKit(ActorSystem("TestProtocol"))
           def initHandler: Receive = {
             case path: ActorPath ⇒
               val actorFor = context.system.actorSelection(path)
+
               import context.dispatcher
+
               internalScheduler = context.system.scheduler.schedule(500 millis, 1 second, new Runnable {
                 override def run() = {
                   actorFor.!(Broadcast(ActorProtocolDefinition.Messages.ProtocolBeacon))(self)
@@ -237,43 +241,60 @@ class ActorProtocolDefinitionTest extends TestKit(ActorSystem("TestProtocol"))
 
       import scala.concurrent.duration._
 
-      val decider: SupervisorStrategy.Decider = {
+      val groupStrategy = OneForOneStrategy() {
         case x: Exception ⇒
-          SupervisorStrategy.Restart
+          SupervisorStrategy.Stop
       }
 
-      val groupStrategy = OneForOneStrategy.apply(-1, Duration.Inf, true)(decider)
+      val exceptions = new AtomicInteger(0)
+
+      val actorId = new AtomicInteger(0)
 
       val consumer = system.actorOf(Props(
         new Actor with ActorProtocolDefinition.ConsumerActorTrait with TestTaskTypes {
 
-          var i = 0
+          val MyNumber = actorId.incrementAndGet()
 
-          override def receive: Receive = consumePrototype(timeout = Timeout(1 second))
+          @volatile var actionError = false
+
+          override def receive = {
+            case Messages.ProtocolBeacon if MyNumber % 2 == 0 ⇒
+
+              import akka.pattern.ask
+
+              val f = sender.?(Messages.PullTaskRequest(self))(timeout = Timeout(1 second))
+              Await.result(f, 2 second)
+              self ! Kill
+            case x: Any ⇒ consumePrototype(timeout = Timeout(1 second))(x)
+          }
 
           override protected def payloadAction(task: String): Either[String, (String, String)] = {
-            if (i == 1) {
-              i = 0
+            if (actionError) {
+              Console.err.println(s"ERROR ${
+                self
+              }")
+              actionError = false
+              exceptions.incrementAndGet()
               throw new Exception("OMG")
             } else {
-              i = 1
+              Console.err.println(s"RECOVER ${
+                self
+              }")
+              actionError = true
               Right((task, self.path.toString))
             }
           }
         }
 
-      ).withRouter(RoundRobinPool(5, supervisorStrategy = groupStrategy)), "Consumer1")
+      ).withRouter(RoundRobinPool(5).withSupervisorStrategy(groupStrategy)), "Consumer1")
 
       producer ! consumer.path
 
       val allDone = expectedInvocations.await(5, TimeUnit.SECONDS)
 
-      println(allDone)
-
       if (!allDone) {
         expectedInvocations.getCount should be(0L)
       }
-
 
       strings.length should be(results.length)
 
@@ -281,14 +302,16 @@ class ActorProtocolDefinitionTest extends TestKit(ActorSystem("TestProtocol"))
       errors should be(empty)
 
       val distinctActorPaths = results.map(_._2).distinct
-      distinctActorPaths.length should be(5)
+      distinctActorPaths.length should be(3)
+
+      exceptions.get() should be > 5
 
     }
 
   }
 
   override protected def afterAll(): Unit = {
-    system.terminate()
+    TestKit.shutdownActorSystem(system)
   }
 
 }
