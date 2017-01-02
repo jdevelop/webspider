@@ -35,13 +35,13 @@ trait HttpTransport extends TransportTrait {
 
   def client: HttpClient
 
-  override def retrieveDocument(link: HasLocation)(handler: TransportTrait.DocumentHandler[Error]) = {
+  override def retrieveDocument[R](link: String)(handler: TransportTrait.DocumentHandler[Error,R]) = {
     var content: InputStream = null
     try {
-      method.setURI(new URI(link.location))
+      method.setURI(new URI(link))
       val response = client.execute(method)
       val statusLine = response.getStatusLine
-      handler {
+      val res = handler {
         statusLine.getStatusCode match {
           case HttpStatus.SC_OK =>
             val headers = response.getAllHeaders.map(header ⇒ header.getName -> header.getValue).toMap
@@ -54,6 +54,7 @@ trait HttpTransport extends TransportTrait {
         }
       }
       content.close()
+      res
     } finally {
       method.releaseConnection()
     }

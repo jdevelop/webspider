@@ -45,7 +45,7 @@ class ClusterProtocolTest extends TestKit(ClusterProtocolTest.sys)
         }
 
         override def preStart(): Unit = {
-          register()
+          registerTopicWatch()
         }
 
         override def receive: Receive = {

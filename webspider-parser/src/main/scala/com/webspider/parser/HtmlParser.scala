@@ -11,27 +11,22 @@ import scala.collection.JavaConversions._
 object HtmlParser extends LogHelper
 
 abstract class HtmlParser(current: String,
-                          linkListener: LinkListener,
                           expressions: List[(String, ExtractFunction)] = defaults)
   extends DocumentParser[InputStream] {
 
-
-  override type ParserResult = Unit
-
   val linkNormalizer: RelativeLinkNormalizer
 
-  override def parse(source: InputStream) {
+  override def parse(source: InputStream) = {
     val doc = Jsoup.parse(source, "UTF-8", current)
-    for (
-      (exp, attr) <- expressions;
-      link <- doc.select(exp)
-    ) {
-      linkNormalizer.normalize(current, attr(link)) match {
-        case Left(err) ⇒
-          HtmlParser.error(err)
-        case Right(resource) ⇒
-          linkListener.linkFound(resource)
-      }
+    expressions.flatMap {
+      case (cssExpression, extractor) ⇒
+        doc.select(cssExpression).map {
+//          element ⇒ linkNormalizer.normalize(current, extractor(element))
+          element ⇒ extractor(element)
+        }
+    } collect {
+      case x: TypedResource ⇒
+        x
     }
   }
 

@@ -9,7 +9,7 @@ import com.webspider.core.{ContentType, HasLocation, Resource}
   */
 object TransportTrait {
 
-  type DocumentHandler[ErrorT] = Either[ErrorT, DocumentResult] ⇒ Unit
+  type DocumentHandler[ErrorT,R] = Either[ErrorT, DocumentResult] ⇒ R
 
   case class DocumentResult(is: InputStream, mbContentType: Option[ContentType], headers: Map[String, String])
 
@@ -21,7 +21,7 @@ trait TransportTrait {
 
   import TransportTrait._
 
-  def retrieveDocument(link: HasLocation)(handler: DocumentHandler[Error]): Unit
+  def retrieveDocument[R](link: String)(handler: DocumentHandler[Error,R]): R
 
   def extractErrorCode(err: Error): Int
 

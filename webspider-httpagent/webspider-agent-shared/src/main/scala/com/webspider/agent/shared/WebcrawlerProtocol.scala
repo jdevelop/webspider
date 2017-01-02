@@ -10,8 +10,16 @@ object WebcrawlerProtocol {
 
   case class ResourceRequest(url: String)
 
-  case class ResponseStatus(code: Int, message: String)
+  sealed trait ResponseStatus
 
-  case class ResourceResponse(url: String, finalUrl: String, response: ResponseStatus)
+  case object ResponseStatusOk extends ResponseStatus
+
+  case class ResponseStatusCode(code: Int, message: String) extends ResponseStatus
+
+  case class ResourceResponse[R](url: String,
+                                 finalUrl: String,
+                                 response: ResponseStatus,
+                                 innerResources: Iterable[R] = Iterable.empty[R]
+                                )
 
 }

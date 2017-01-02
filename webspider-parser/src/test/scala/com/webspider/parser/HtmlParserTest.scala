@@ -14,6 +14,7 @@ import scala.collection.mutable.{Map => MMap}
 class HtmlParserTest extends FunSpec with MustMatchers {
 
   val resources = if (new File("./webspider-parser").exists()) new File("./webspider-parser/src/test/resources/htmlparser/") else new File("src/test/resources/htmlparser/")
+
   val docsDir = new File(resources, "document")
   val linksDir = new File(resources, "links")
   val linkDir = new File(resources, "link")
@@ -32,23 +33,19 @@ class HtmlParserTest extends FunSpec with MustMatchers {
           val linkMap: MMap[String, Int] = io.Source.fromFile(links).getLines().foldLeft(MMap[String, Int]()) {
             case (map, linkString) => map += (linkString -> 0)
           }
-          val listener = new LinkListener {
-            def linkFound(link: String) {
-              for (
-                count <- linkMap.get(link)
-              ) {
-                linkMap.update(link, count + 1)
-              }
-            }
-          }
-          new HtmlParser(url.location, listener) {
+          new HtmlParser(url.location) {
             val linkNormalizer = new ApacheCommonsLinkNormalizer
-          }.parse(new FileInputStream(doc))
-          val hasZeroLinks = linkMap.filter {
-            case (k, v) => v == 0
+          }.parse(new FileInputStream(doc)).foreach {
+            tr ⇒
+              for (
+                count <- linkMap.get(tr.src)
+              ) {
+                linkMap.update(tr.src, count + 1)
+              }
           }
+          val hasZeroLinks = linkMap.filter(_._2 == 0)
           assert(
-            hasZeroLinks.size == 0, hasZeroLinks.keys.mkString(",")
+            hasZeroLinks.isEmpty, hasZeroLinks.keys.mkString(",")
           )
       }
     }

@@ -27,7 +27,7 @@ object ClusterProtocol {
 
     protected def TopicName: String
 
-    protected def register(): Unit = {
+    protected def registerTopicWatch(): Unit = {
       mediator ! Subscribe(TopicName, self)
       context become awaitClusterRegistration
     }
