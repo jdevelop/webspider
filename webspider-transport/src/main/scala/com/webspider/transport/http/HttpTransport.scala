@@ -18,7 +18,7 @@ object HttpTransport {
 
   case class Get[L <: Resource](client: HttpClient) extends HttpTransport {
 
-    val method = new HttpGet()
+    override protected def createMethod(): HttpRequestBase = new HttpGet()
 
   }
 
@@ -31,12 +31,13 @@ trait HttpTransport extends TransportTrait {
 
   override type Error = HttpTransport.HttpError
 
-  def method: HttpRequestBase
+  protected def createMethod(): HttpRequestBase
 
   def client: HttpClient
 
-  override def retrieveDocument[R](link: String)(handler: TransportTrait.DocumentHandler[Error,R]) = {
+  override def retrieveDocument[R](link: String)(handler: TransportTrait.DocumentHandler[Error, R]) = {
     var content: InputStream = null
+    val method = createMethod()
     try {
       method.setURI(new URI(link))
       val response = client.execute(method)

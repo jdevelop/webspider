@@ -12,9 +12,8 @@ class HttpTransportTest extends FunSpec with ShouldMatchers {
 
   describe("HttpTransport") {
     it("should be able to access common URLs") {
-      implicit val client = new DefaultHttpClient()
 
-      HttpTransport.Get(client).retrieveDocument("http://www.google.com") {
+      HttpTransport.Get(HTTPClient.client).retrieveDocument("http://www.google.com") {
         case Right(DocumentResult(resultStream, contentType, headers)) ⇒
           Stream.continually(resultStream.read()).takeWhile(_ != -1).map(_.toByte).toArray.length should be > 0
           headers.nonEmpty should be(true)

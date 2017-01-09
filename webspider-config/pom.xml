@@ -4,43 +4,40 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <parent>
+    <artifactId>webspider-parent</artifactId>
     <groupId>com.webspider</groupId>
-    <artifactId>webspider-httpagent</artifactId>
     <version>0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>webspider-agent-node</artifactId>
-  <version>0.1-SNAPSHOT</version>
-  <name>webspider-agent-node</name>
+  <artifactId>webspider-config</artifactId>
+  <name>webspider-config</name>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <dependencies>
     <dependency>
-      <groupId>com.webspider</groupId>
-      <artifactId>webspider-agent-shared</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.webspider</groupId>
-      <artifactId>webspider-parser</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.webspider</groupId>
-      <artifactId>webspider-config</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.webspider</groupId>
-      <artifactId>webspider-transport</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.rogach</groupId>
-      <artifactId>scallop_${scala.base}</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.typesafe</groupId>
+      <artifactId>config</artifactId>
+      <version>1.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_${scala.base}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe.scala-logging</groupId>
+      <artifactId>scala-logging_${scala.base}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
   </dependencies>
   <build>
+    <sourceDirectory>src/main/scala</sourceDirectory>
     <plugins>
       <plugin>
         <groupId>net.alchim31.maven</groupId>

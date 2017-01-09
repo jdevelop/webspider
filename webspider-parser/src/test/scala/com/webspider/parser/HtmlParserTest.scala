@@ -34,7 +34,7 @@ class HtmlParserTest extends FunSpec with MustMatchers {
             case (map, linkString) => map += (linkString -> 0)
           }
           new HtmlParser(url.location) {
-            val linkNormalizer = new ApacheCommonsLinkNormalizer
+            val linkNormalizer = ApacheCommonsLinkNormalizer
           }.parse(new FileInputStream(doc)).foreach {
             tr ⇒
               for (

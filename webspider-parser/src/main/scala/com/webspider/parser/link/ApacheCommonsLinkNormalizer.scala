@@ -3,9 +3,10 @@ package com.webspider.parser.link
 import java.net.URI
 
 import com.webspider.core.utils.LogHelper
+import com.webspider.parser.link.RelativeLinkNormalizer
 import org.apache.http.client.utils.URIUtils
 
-class ApacheCommonsLinkNormalizer extends RelativeLinkNormalizer with LogHelper {
+object ApacheCommonsLinkNormalizer extends RelativeLinkNormalizer with LogHelper {
 
   def normalize(current: String, relativeLink: String): Either[String, String] = {
     debug("Normalize %s - %s".format(current, removeAnchor(relativeLink)))

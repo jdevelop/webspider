@@ -41,6 +41,11 @@
         <artifactId>webspider-storage</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>webspider-config</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- Project dependencies -->
       <dependency>
@@ -70,7 +75,7 @@
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
-        <version>4.2.1</version>
+        <version>4.5.2</version>
       </dependency>
 
       <dependency>
@@ -83,6 +88,12 @@
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
         <version>1.2.17</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.typesafe.scala-logging</groupId>
+        <artifactId>scala-logging_${scala.base}</artifactId>
+        <version>3.5.0</version>
       </dependency>
 
       <dependency>
@@ -108,6 +119,7 @@
   </dependencyManagement>
 
   <modules>
+    <module>webspider-config</module>
     <module>webspider-core</module>
     <module>webspider-parser</module>
     <module>webspider-transport</module>
