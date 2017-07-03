@@ -9,9 +9,7 @@
     <version>0.1-SNAPSHOT</version>
   </parent>
   <artifactId>webspider-agent-shared</artifactId>
-  <version>0.1-SNAPSHOT</version>
   <name>webspider-agent-shared</name>
-  <url>http://maven.apache.org</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -61,6 +59,13 @@
       <artifactId>scalacheck_2.11</artifactId>
       <version>1.13.4</version>
     </dependency>
+
+    <!-- CLI -->
+    <dependency>
+      <groupId>org.rogach</groupId>
+      <artifactId>scallop_${scala.base}</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>

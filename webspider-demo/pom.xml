@@ -5,27 +5,46 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.webspider</groupId>
-    <artifactId>webspider-httpagent</artifactId>
+    <artifactId>webspider-parent</artifactId>
     <version>0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>webspider-agent-scheduler</artifactId>
-  <name>webspider-agent-scheduler</name>
+  <artifactId>webspider-demo</artifactId>
+  <name>webspider-demo</name>
+  <url>http://maven.apache.org</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <dependencies>
     <dependency>
       <groupId>com.webspider</groupId>
-      <artifactId>webspider-agent-shared</artifactId>
+      <artifactId>webspider-agent-node</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.rogach</groupId>
-      <artifactId>scallop_${scala.base}</artifactId>
+      <groupId>com.webspider</groupId>
+      <artifactId>webspider-agent-scheduler</artifactId>
+      <version>${project.version}</version>
     </dependency>
+
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.typesafe.akka</groupId>
+      <artifactId>akka-actor_${scala.base}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe.akka</groupId>
+      <artifactId>akka-http_${scala.base}</artifactId>
+      <version>10.0.9</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.5</version>
+    </dependency>
+
   </dependencies>
   <build>
     <plugins>

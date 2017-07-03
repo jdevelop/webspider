@@ -2,20 +2,19 @@ package com.webspider.agent.node
 
 import java.io.InputStream
 
-import akka.actor.{Actor, ActorSystem, Address, AddressFromURIString, Props}
+import akka.actor.{Actor, ActorSystem, AddressFromURIString, Props}
 import akka.cluster.Cluster
 import akka.routing.RoundRobinPool
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import com.webspider.agent.shared.WebcrawlerProtocol._
-import com.webspider.agent.shared.{ActorProtocolDefinition, ClusterProtocol, ClusterWatcher}
+import com.webspider.agent.shared.{ActorProtocolDefinition, CLIHelper, ClusterProtocol, ClusterWatcher}
 import com.webspider.config.Config
 import com.webspider.parser.link.{ApacheCommonsLinkNormalizer, RelativeLinkNormalizer}
 import com.webspider.parser.{DocumentParser, HtmlParser, TypedResource}
 import com.webspider.transport.TransportTrait
 import com.webspider.transport.http.HttpTransport
 import org.rogach.scallop.ScallopConf
-import org.rogach.scallop.exceptions.ScallopException
 
 
 /**
@@ -75,34 +74,7 @@ object HttpClientNode {
 
   def main(args: Array[String]): Unit = {
 
-    object CLI extends ScallopConf(args) {
-
-      val seedNodes = opt[List[String]]("seed-nodes")
-
-      val clusterConf = opt[ClusterConf]("cluster", descr = "host:port[:bindhost[:bindport]]", required = true)(org.rogach.scallop.singleArgConverter {
-        str ⇒
-          str.split(":") match {
-            case Array(host, port) ⇒
-              val portInt = port.toInt
-              ClusterConf(host, host, portInt, portInt)
-            case Array(host, port, bindHost) ⇒
-              val portInt = port.toInt
-              ClusterConf(host, bindHost, portInt, portInt)
-            case Array(host, port, bindHost, bindPort) ⇒
-              val portInt = port.toInt
-              val bindPortInt = bindPort.toInt
-              ClusterConf(host, bindHost, portInt, bindPortInt)
-          }
-      })
-
-      override protected def onError(e: Throwable): Unit = e match {
-        case err: ScallopException ⇒
-          Console.err.println(err.getMessage)
-          printHelp()
-          sys.exit(1)
-        case err: Exception ⇒ throw err
-      }
-    }
+    object CLI extends ScallopConf(args) with CLIHelper.ClusterParams with CLIHelper.ErrorReporter
 
     CLI.verify()
 
@@ -140,7 +112,6 @@ object HttpClientNode {
 
       ClusterWatcher.onRemovedEvent(c)
 
-      Console.err.println(s"Cluster started, worker actor: ${ref}")
     }
 
   }
