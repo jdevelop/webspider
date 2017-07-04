@@ -6,7 +6,7 @@ import akka.actor.{Actor, ActorSystem, AddressFromURIString, Props}
 import akka.cluster.Cluster
 import akka.routing.RoundRobinPool
 import com.webspider.agent.shared.ActorProtocolDefinition.Messages.ProtocolBeacon
-import com.webspider.agent.shared.WebcrawlerProtocol.ResourceResponse
+import com.webspider.agent.shared.WebcrawlerProtocol.{ResourceRequest, ResourceResponse}
 import com.webspider.agent.shared._
 import com.webspider.core.{Href, TypedResource}
 import org.rogach.scallop.ScallopConf
@@ -47,7 +47,7 @@ object TaskSchedulerNode extends Bootstrap.BootstrapNode {
 
   }
 
-  private class Worker() extends Actor
+  private class Worker(maxProcessSize: Int = 50) extends Actor
     with ActorProtocolDefinition.ProducerActorTrait
     with ClusterProtocol.ClusterPublisher {
 
@@ -55,22 +55,22 @@ object TaskSchedulerNode extends Bootstrap.BootstrapNode {
 
     private val queue = new mutable.HashSet[TaskT]()
 
-    private val processed = new mutable.HashSet[TaskT]()
+    private val processed = new mutable.HashSet[TypedResource]()
 
     override def receive: Receive = producePrototype orElse {
       case SeedUrl(url) if currentTask.isEmpty ⇒
         currentTask = Some(url)
-        queue.add(Href(url))
+        enqueueTask(ResourceRequest(Href(url)))
         publish(ProtocolBeacon, "Topic.Url.Requests")
         sender ! Some(UUID.randomUUID())
       case _ ⇒
         sender ! None
     }
 
-    override protected def hasMoreTasks: Boolean = queue.isEmpty
+    override protected def hasMoreTasks: Boolean = processed.size <= maxProcessSize && queue.nonEmpty
 
     override protected def nextTask: Option[TaskT] = {
-      val head = processed.headOption
+      val head = queue.headOption
       head.foreach(queue.remove)
       head
     }
@@ -85,12 +85,12 @@ object TaskSchedulerNode extends Bootstrap.BootstrapNode {
           processed.add(url)
           inners
             .filterNot(res ⇒ processed.contains(res))
-            .foreach(enqueueTask)
+            .foreach(x ⇒ enqueueTask(ResourceRequest(x)))
         case Left(err) ⇒
       }
     }
 
-    override type TaskT = TypedResource
+    override type TaskT = ResourceRequest[TypedResource]
     override type ResultT = ResourceResponse[TypedResource]
     override type ErrorT = Exception
 

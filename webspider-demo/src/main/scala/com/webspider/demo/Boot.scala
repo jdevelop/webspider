@@ -81,7 +81,6 @@ object Boot extends Bootstrap.BootstrapNode {
             }
             val res = Cache.computeIfAbsent(path, new function.Function[String, Array[Byte]] {
               override def apply(t: String): Array[Byte] = {
-                println("Missed ", path)
                 IOUtils.toByteArray(getClass.getResourceAsStream(path))
               }
             })
