@@ -11,9 +11,9 @@ import com.webspider.agent.shared.WebcrawlerProtocol._
 import com.webspider.agent.shared.{ActorProtocolDefinition, CLIHelper, ClusterProtocol, ClusterWatcher}
 import com.webspider.config.Config
 import com.webspider.parser.link.{ApacheCommonsLinkNormalizer, RelativeLinkNormalizer}
-import com.webspider.parser.{DocumentParser, HtmlParser, TypedResource}
+import com.webspider.parser.{DocumentParser, Href, HtmlParser, TypedResource}
 import com.webspider.transport.TransportTrait
-import com.webspider.transport.http.HttpTransport
+import com.webspider.transport.http.{HTTPClient, HttpTransport}
 import org.rogach.scallop.ScallopConf
 
 
@@ -32,7 +32,7 @@ object HttpClientNode {
 
     override protected val TopicName: String = "Topic.Url.Requests"
 
-    override type TaskT = ResourceRequest
+    override type TaskT = ResourceRequest[TypedResource]
     override type ResultT = ResourceResponse[TypedResource]
     override type ErrorT = Exception
 
@@ -50,27 +50,25 @@ object HttpClientNode {
 
     override def receive: Receive = consumePrototype(Timeout(5 seconds))
 
-    override protected def payloadAction(task: ResourceRequest): Either[Exception, ResourceResponse[TypedResource]] = {
+    override protected def payloadAction(task: ResourceRequest[TypedResource]): Either[Exception, ResourceResponse[TypedResource]] = {
       try {
-        transport.retrieveDocument[Either[Exception, ResourceResponse[TypedResource]]](task.url) {
+        transport.retrieveDocument[Either[Exception, ResourceResponse[TypedResource]]](task.url.src) {
           case Left(err) ⇒
             val code = transport.extractErrorCode(err)
             val message = transport.extractErrorMessage(err)
-            Right(ResourceResponse(task.url, task.url, ResponseStatusCode(code, message)))
+            Right(ResourceResponse(Href(task.url.src), task.url.src, ResponseStatusCode(code, message)))
           case Right(doc) ⇒
-            val linkExtractor = linkExtractorProvider(task.url)
+            val linkExtractor = linkExtractorProvider(task.url.src)
             val results = linkExtractor.parse(
               doc.is
             )
-            Right(ResourceResponse(task.url, task.url, ResponseStatusOk, results))
+            Right(ResourceResponse(task.url, task.url.src, ResponseStatusOk, results))
         }
       } catch {
         case e: Exception ⇒ Left(e)
       }
     }
   }
-
-  case class ClusterConf(host: String, bindHost: String, port: Int, bindPort: Int)
 
   def main(args: Array[String]): Unit = {
 
@@ -92,7 +90,7 @@ object HttpClientNode {
 
     val c = Cluster(actorSystem)
 
-    val transportTrait = HttpTransport.Get(null)
+    val transportTrait = HttpTransport.Get(HTTPClient.client)
 
     val linkExtractorProvider: DocumentParserProvider = {
       url ⇒
@@ -107,7 +105,9 @@ object HttpClientNode {
 
     c.registerOnMemberUp {
       Console.out.println("Starting the cluster")
-      val ref = actorSystem.actorOf(Props(new Worker(transportTrait, linkExtractorProvider)).withRouter(RoundRobinPool(5)), "webspider_node")
+
+      actorSystem.actorOf(Props(new Worker(transportTrait, linkExtractorProvider)).withRouter(RoundRobinPool(5)), "webspider_node")
+
       ClusterWatcher.registerRestartJVMWatcherActor(actorSystem)
 
       ClusterWatcher.onRemovedEvent(c)

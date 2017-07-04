@@ -19,6 +19,14 @@
       <artifactId>webspider-agent-shared</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.webspider</groupId>
+      <artifactId>webspider-config</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.webspider</groupId>
+      <artifactId>webspider-parser</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.rogach</groupId>
       <artifactId>scallop_${scala.base}</artifactId>
     </dependency>

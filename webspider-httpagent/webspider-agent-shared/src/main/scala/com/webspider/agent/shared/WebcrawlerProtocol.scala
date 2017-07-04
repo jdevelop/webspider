@@ -8,7 +8,7 @@ package com.webspider.agent.shared
   */
 object WebcrawlerProtocol {
 
-  case class ResourceRequest(url: String)
+  case class ResourceRequest[T](url: T)
 
   sealed trait ResponseStatus
 
@@ -16,7 +16,7 @@ object WebcrawlerProtocol {
 
   case class ResponseStatusCode(code: Int, message: String) extends ResponseStatus
 
-  case class ResourceResponse[R](url: String,
+  case class ResourceResponse[R](url: R,
                                  finalUrl: String,
                                  response: ResponseStatus,
                                  innerResources: Iterable[R] = Iterable.empty[R]
