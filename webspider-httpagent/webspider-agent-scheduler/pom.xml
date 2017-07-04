@@ -24,7 +24,7 @@
     </dependency>
     <dependency>
       <groupId>com.webspider</groupId>
-      <artifactId>webspider-parser</artifactId>
+      <artifactId>webspider-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.rogach</groupId>

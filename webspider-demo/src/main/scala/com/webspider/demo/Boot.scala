@@ -1,25 +1,31 @@
 package com.webspider.demo
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 import java.util.function
 
+import akka.pattern._
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import akka.util.ByteString
-import com.webspider.agent.shared.CLIHelper
+import akka.util.{ByteString, Timeout}
+import com.webspider.agent.node.HttpClientNode
+import com.webspider.agent.shared.{Bootstrap, CLIHelper}
+import com.webspider.scheduler.node.TaskSchedulerNode
+import com.webspider.scheduler.node.TaskSchedulerNode.SeedUrl
 import org.apache.commons.io.IOUtils
 import org.rogach.scallop.ScallopConf
 
-object Boot {
+object Boot extends Bootstrap.BootstrapNode {
 
   val ExtRegex = ".*\\.(\\w+)$".r
 
   val BasicUrlvalidation = "^https?://".r
 
   val Cache = new ConcurrentHashMap[String, Array[Byte]](10)
+
+  val to = Timeout(2, TimeUnit.SECONDS)
 
   def main(args: Array[String]): Unit = {
 
@@ -32,12 +38,27 @@ object Boot {
 
     Conf.verify()
 
+    val (c, cs) = configure(CLIHelper.ClusterConf("127.0.0.1", "127.0.0.1", 2551, 2551),
+      List("akka.tcp://testcluster@127.0.0.1:2551"), "testcluster")
+
+    HttpClientNode.start(c, cs)
+    TaskSchedulerNode.start(c, cs)
+
+    val schedulerRef = cs.actorSelection("/user/scheduler_node")
+
     // accept POST request with the initial URL
     val rte = (post & path("validate") & formField("url")) {
       case url if BasicUrlvalidation.findFirstMatchIn(url).isDefined ⇒
         // start processing of the data
         // send status back to the page
-        complete(url)
+        implicit val timeout = to
+        import cs.dispatcher
+        complete(
+          (schedulerRef ? SeedUrl(url)).map {
+            case Some(uuid) ⇒ uuid.toString
+            case None ⇒ "n/a"
+          }
+        )
       case url ⇒
         // start processing of the data
         // send status back to the page
@@ -51,8 +72,8 @@ object Boot {
           case "/" ⇒ "/html/index.html"
           case x ⇒ s"/html$x"
         }
-        Option(getClass.getResourceAsStream(path)).fold(ctx.complete((404, "Not found"))) {
-          stream ⇒
+        Option(getClass.getResource(path)).fold(ctx.complete((404, "Not found"))) {
+          _ ⇒
             val ct = path match {
               case ExtRegex("html") ⇒ ContentTypes.`text/html(UTF-8)`
               case ExtRegex("css") ⇒ ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`)
@@ -87,5 +108,6 @@ object Boot {
 
 
   }
+
 
 }

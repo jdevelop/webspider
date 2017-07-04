@@ -2,16 +2,15 @@ package com.webspider.agent.node
 
 import java.io.InputStream
 
-import akka.actor.{Actor, ActorSystem, AddressFromURIString, Props}
+import akka.actor.{Actor, ActorSystem, Props}
 import akka.cluster.Cluster
 import akka.routing.RoundRobinPool
 import akka.util.Timeout
-import com.typesafe.config.ConfigFactory
 import com.webspider.agent.shared.WebcrawlerProtocol._
-import com.webspider.agent.shared.{ActorProtocolDefinition, CLIHelper, ClusterProtocol, ClusterWatcher}
-import com.webspider.config.Config
+import com.webspider.agent.shared._
+import com.webspider.core.{Href, TypedResource}
 import com.webspider.parser.link.{ApacheCommonsLinkNormalizer, RelativeLinkNormalizer}
-import com.webspider.parser.{DocumentParser, Href, HtmlParser, TypedResource}
+import com.webspider.parser.{DocumentParser, HtmlParser}
 import com.webspider.transport.TransportTrait
 import com.webspider.transport.http.{HTTPClient, HttpTransport}
 import org.rogach.scallop.ScallopConf
@@ -21,7 +20,7 @@ import org.rogach.scallop.ScallopConf
   * User: Eugene Dzhurinsky
   * Date: 12/24/16
   */
-object HttpClientNode {
+object HttpClientNode extends Bootstrap.BootstrapNode {
 
   type DocumentParserProvider = (String) ⇒ DocumentParser[InputStream]
 
@@ -45,7 +44,7 @@ object HttpClientNode {
     }
 
     override def onSubscribeDone(): Unit = {
-      Console.out.println("Cluster registration complete")
+      Console.out.println("HTTP : Cluster registration complete")
     }
 
     override def receive: Receive = consumePrototype(Timeout(5 seconds))
@@ -76,19 +75,13 @@ object HttpClientNode {
 
     CLI.verify()
 
-    val clusterConfig = CLI.clusterConf()
+    val (c, actorSystem) = configure(CLI.clusterConf(), CLI.seedNodes())
 
-    val akkaConf = ConfigFactory.parseString(
-      s"""akka.remote.netty.tcp.port=${clusterConfig.port}
-         |akka.remote.netty.tcp.hostname=${clusterConfig.host}
-         |akka.remote.netty.tcp.bind-hostname=${clusterConfig.bindHost}
-         |akka.remote.netty.tcp.bind-port=${clusterConfig.bindPort}
-         |
-      """.stripMargin).withFallback(Config.cfg)
+    start(c, actorSystem)
 
-    val actorSystem = ActorSystem("WebspiderCluster", akkaConf)
+  }
 
-    val c = Cluster(actorSystem)
+  def start(c: Cluster, actorSystem: ActorSystem): Unit = {
 
     val transportTrait = HttpTransport.Get(HTTPClient.client)
 
@@ -99,12 +92,8 @@ object HttpClientNode {
         }
     }
 
-    if (CLI.seedNodes.isSupplied) {
-      c.joinSeedNodes(CLI.seedNodes().map(AddressFromURIString.apply))
-    }
-
     c.registerOnMemberUp {
-      Console.out.println("Starting the cluster")
+      Console.out.println("HTTP : Starting the cluster")
 
       actorSystem.actorOf(Props(new Worker(transportTrait, linkExtractorProvider)).withRouter(RoundRobinPool(5)), "webspider_node")
 
@@ -113,6 +102,7 @@ object HttpClientNode {
       ClusterWatcher.onRemovedEvent(c)
 
     }
+
 
   }
 

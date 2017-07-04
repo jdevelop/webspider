@@ -11,7 +11,7 @@ object CLIHelper {
 
     _: ScallopConf ⇒
 
-    val seedNodes = opt[List[String]]("seed-nodes")
+    val seedNodes = opt[List[String]]("seed-nodes", default = Some(List.empty))
 
     val clusterConf = opt[ClusterConf]("cluster", descr = "host:port[:bindhost[:bindport]]", required = true)(org.rogach.scallop.singleArgConverter {
       str ⇒

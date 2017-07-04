@@ -5,17 +5,15 @@ import java.util.UUID
 import akka.actor.{Actor, ActorSystem, AddressFromURIString, Props}
 import akka.cluster.Cluster
 import akka.routing.RoundRobinPool
-import com.typesafe.config.ConfigFactory
 import com.webspider.agent.shared.ActorProtocolDefinition.Messages.ProtocolBeacon
-import com.webspider.agent.shared.WebcrawlerProtocol.{ResourceRequest, ResourceResponse}
-import com.webspider.agent.shared.{ActorProtocolDefinition, CLIHelper, ClusterProtocol, ClusterWatcher}
-import com.webspider.config.Config
-import com.webspider.parser.{Href, TypedResource}
+import com.webspider.agent.shared.WebcrawlerProtocol.ResourceResponse
+import com.webspider.agent.shared._
+import com.webspider.core.{Href, TypedResource}
 import org.rogach.scallop.ScallopConf
 
 import scala.collection.mutable
 
-object TaskSchedulerNode {
+object TaskSchedulerNode extends Bootstrap.BootstrapNode {
 
   case class SeedUrl(url: String)
 
@@ -25,35 +23,27 @@ object TaskSchedulerNode {
 
     Conf.verify()
 
-    val clusterConfig = Conf.clusterConf()
-
-    val akkaConf = ConfigFactory.parseString(
-      s"""akka.remote.netty.tcp.port=${clusterConfig.port}
-         |akka.remote.netty.tcp.hostname=${clusterConfig.host}
-         |akka.remote.netty.tcp.bind-hostname=${clusterConfig.bindHost}
-         |akka.remote.netty.tcp.bind-port=${clusterConfig.bindPort}
-         |
-      """.stripMargin).withFallback(Config.cfg)
-
-    val actorSystem = ActorSystem("WebspiderCluster", akkaConf)
-
-    val c = Cluster(actorSystem)
+    val (c, actorSystem) = configure(Conf.clusterConf(), Conf.seedNodes())
 
     if (Conf.seedNodes.isSupplied) {
       c.joinSeedNodes(Conf.seedNodes().map(AddressFromURIString.apply))
     }
 
-    c.registerOnMemberUp {
-      Console.out.println("Starting the cluster")
+    start(c, actorSystem)
 
-      actorSystem.actorOf(Props(new Worker()).withRouter(RoundRobinPool(10)), "scheduler_node")
+  }
+
+  def start(c: Cluster, actorSystem: ActorSystem): Unit = {
+    c.registerOnMemberUp {
+      Console.out.println("Scheduler : Starting the cluster")
+
+      actorSystem.actorOf(Props(new Worker()), "scheduler_node")
 
       ClusterWatcher.registerRestartJVMWatcherActor(actorSystem)
 
       ClusterWatcher.onRemovedEvent(c)
 
     }
-
 
   }
 

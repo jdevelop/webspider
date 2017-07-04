@@ -2,6 +2,7 @@ package com.webspider.parser
 
 import java.io.InputStream
 
+import com.webspider.core.TypedResource
 import com.webspider.core.utils.LogHelper
 import com.webspider.parser.link.RelativeLinkNormalizer
 import org.jsoup.Jsoup
@@ -21,7 +22,6 @@ abstract class HtmlParser(current: String,
     expressions.flatMap {
       case (cssExpression, extractor) ⇒
         doc.select(cssExpression).map {
-//          element ⇒ linkNormalizer.normalize(current, extractor(element))
           element ⇒ extractor(element)
         }
     } collect {

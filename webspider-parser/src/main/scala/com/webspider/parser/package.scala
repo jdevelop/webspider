@@ -1,5 +1,6 @@
 package com.webspider
 
+import com.webspider.core._
 import org.jsoup.nodes.Element
 
 package object parser {
@@ -21,26 +22,6 @@ package object parser {
 
   )
 
-
-  sealed trait TypedResource {
-
-    val src: String
-
-  }
-
-  case class Href(src: String) extends TypedResource
-
-  case class Img(src: String) extends TypedResource
-
-  case class Script(src: String) extends TypedResource
-
-  case class CssLink(src: String) extends TypedResource
-
-  case class Form(src: String) extends TypedResource
-
-  case class FormInput(src: String) extends TypedResource
-
-  case class Embed(src: String) extends TypedResource
 
   type ExtractFunction = Element => TypedResource
 
