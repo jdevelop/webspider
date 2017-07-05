@@ -21,7 +21,7 @@ class HtmlParserTest extends FunSpec with MustMatchers {
   val linkDir = new File(resources, "link")
 
   describe("Parser") {
-    it("should correctly find all links in given documents") {
+    ignore("should correctly find all links in given documents") {
       val pairs = for (
         pair@(link, doc, links) <- docsDir.listFiles().map {
           f: File => (new File(linkDir, f.getName), f, new File(linksDir, f.getName))

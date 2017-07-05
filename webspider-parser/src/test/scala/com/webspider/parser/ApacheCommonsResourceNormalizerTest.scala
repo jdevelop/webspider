@@ -18,7 +18,7 @@ class ApacheCommonsResourceNormalizerTest extends FunSpec with MustMatchers {
         filter(!_.trim().isEmpty).
         grouped(3).foreach {
         case List(current, raw, formatted) =>
-          normalizer.normalize(current, raw) must be(Right(formatted))
+          normalizer.normalize(current, raw) must be(formatted)
         case unknown =>
           fail("Wrong chunk: %1$s".format(unknown))
       }
