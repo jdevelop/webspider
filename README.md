@@ -1,14 +1,11 @@
 webspider [![Build Status](https://travis-ci.org/jdevelop/webspider.svg?branch=master)](https://travis-ci.org/jdevelop/webspider)
 =========
 
-Open WEB spider platform, inspired by [LinkTiger](http://www.linktiger.com) and [PageFreezer](http://pagefreezer.com)
+Open WEB spider platform. Uses [Akka Cluster](http://doc.akka.io/docs/akka/snapshot/java/cluster-usage.html) for distributed processing, along with [Distributed PubSub](http://doc.akka.io/docs/akka/snapshot/scala/distributed-pub-sub.html).
 
-The related projects are listed [Here](http://java-source.net/open-source/crawlers/java-web-crawler)
+The **webspider-demo** module contains the simple web application that starts one task scheduler node, and couple of web processing nodes, and exposes the interface at http://localhost:8080/
 
-## Description ##
-
-Open WEB spider aimed to solve common task of downloading the entire content of WEB-site and allow on-fly post-processing of content.
-Planned features are
+### Planned features ###
 
  - extract text from HTML/PDF documents
  - process only documents, matching given patterns in names/content types
@@ -20,6 +17,5 @@ Planned features are
  - concurrent processing of website pages
  - minimize traffic using bzip/gzip encoding when possible, avoid donloading of same link twice or more times
 
-Supported protocols:
+### Supported protocols: ###
  - HTTP(S)
- - FTP
