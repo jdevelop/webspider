@@ -4,7 +4,7 @@ import java.util.UUID
 
 import akka.actor.{Actor, ActorSystem, AddressFromURIString, Props}
 import akka.cluster.Cluster
-import akka.routing.RoundRobinPool
+import com.typesafe.scalalogging.Logger
 import com.webspider.agent.shared.ActorProtocolDefinition.Messages.ProtocolBeacon
 import com.webspider.agent.shared.WebcrawlerProtocol.{ResourceRequest, ResourceResponse}
 import com.webspider.agent.shared._
@@ -15,7 +15,15 @@ import scala.collection.mutable
 
 object TaskSchedulerNode extends Bootstrap.BootstrapNode {
 
+  private val LOG = Logger(getClass)
+
   case class SeedUrl(url: String)
+
+  trait CompletionHandler {
+
+    def taskComplete()
+
+  }
 
   def main(args: Array[String]): Unit = {
 
@@ -82,12 +90,21 @@ object TaskSchedulerNode extends Bootstrap.BootstrapNode {
     override protected def processResponse(src: Either[ErrorT, ResultT]): Unit = {
       src match {
         case Right(ResourceResponse(url, _, _, inners)) ⇒
+          LOG.debug(s"Received ${url} with children ${inners.size}")
           processed.add(url)
           inners
             .filterNot(res ⇒ processed.contains(res))
             .foreach(x ⇒ enqueueTask(ResourceRequest(x)))
         case Left(err) ⇒
+          LOG.error("Can't process response", err)
       }
+    }
+
+
+    override protected def taskCompleted(): Unit = {
+      println(s"${currentTask} complete!")
+      currentTask = None
+      processed.clear()
     }
 
     override type TaskT = ResourceRequest[TypedResource]

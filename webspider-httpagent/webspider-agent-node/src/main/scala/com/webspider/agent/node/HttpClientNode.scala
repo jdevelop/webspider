@@ -9,6 +9,7 @@ import akka.util.Timeout
 import com.webspider.agent.shared.WebcrawlerProtocol._
 import com.webspider.agent.shared._
 import com.webspider.core.{Href, TypedResource}
+import com.webspider.parser
 import com.webspider.parser.link.{ApacheCommonsLinkNormalizer, RelativeLinkNormalizer}
 import com.webspider.parser.{DocumentParser, HtmlParser}
 import com.webspider.transport.TransportTrait
@@ -23,6 +24,14 @@ import org.rogach.scallop.ScallopConf
 object HttpClientNode extends Bootstrap.BootstrapNode {
 
   type DocumentParserProvider = (String) ⇒ DocumentParser[InputStream]
+
+  case class HttpException(src: String, cause: Exception) extends Exception(cause) {
+
+    override def getMessage: String = {
+      src + " : " + cause.getMessage
+    }
+
+  }
 
   private class Worker(transport: TransportTrait,
                        linkExtractorProvider: DocumentParserProvider) extends Actor
@@ -64,7 +73,7 @@ object HttpClientNode extends Bootstrap.BootstrapNode {
             Right(ResourceResponse(task.url, task.url.src, ResponseStatusOk, results))
         }
       } catch {
-        case e: Exception ⇒ Left(e)
+        case e: Exception ⇒ Left(HttpException(task.url.src, e))
       }
     }
   }
@@ -86,10 +95,7 @@ object HttpClientNode extends Bootstrap.BootstrapNode {
     val transportTrait = HttpTransport.Get(HTTPClient.client)
 
     val linkExtractorProvider: DocumentParserProvider = {
-      url ⇒
-        new HtmlParser(url) {
-          override val linkNormalizer: RelativeLinkNormalizer = ApacheCommonsLinkNormalizer
-        }
+      url ⇒ HtmlParser(url, parser.extractorDefaults(src ⇒ ApacheCommonsLinkNormalizer.normalize(url, src)))
     }
 
     c.registerOnMemberUp {

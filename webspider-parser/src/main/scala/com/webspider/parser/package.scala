@@ -5,25 +5,25 @@ import org.jsoup.nodes.Element
 
 package object parser {
 
-  def plainAttribute(name: String, buildFrom: String ⇒ TypedResource)(e: Element) = {
+  def plainAttribute(normalizer: String ⇒ String)(name: String, buildFrom: String ⇒ TypedResource)(e: Element) = {
     buildFrom {
-      e.attr(name)
+      normalizer(e.attr(name))
     }
   }
 
-  val defaults = List(
-    ("a[href]", plainAttribute("href", Href.apply) _),
-    ("img[src]", plainAttribute("src", Img.apply) _),
-    ("script[src]", plainAttribute("src", Script.apply) _),
-    ("link[href]", plainAttribute("href", CssLink.apply) _),
-    ("form[action]", plainAttribute("action", Form.apply) _),
-    ("input[src]", plainAttribute("src", FormInput.apply) _),
-    ("embed[src]", plainAttribute("src", Embed.apply) _) //flash embed movies
+  def extractorDefaults(normalizer: String ⇒ String) = List(
+    ("a[href]", plainAttribute(normalizer)("href", Href.apply) _),
+    ("img[src]", plainAttribute(normalizer)("src", Img.apply) _),
+    ("script[src]", plainAttribute(normalizer)("src", Script.apply) _),
+    ("link[href]", plainAttribute(normalizer)("href", CssLink.apply) _),
+    ("form[action]", plainAttribute(normalizer)("action", Form.apply) _),
+    ("input[src]", plainAttribute(normalizer)("src", FormInput.apply) _),
+    ("embed[src]", plainAttribute(normalizer)("src", Embed.apply) _) //flash embed movies
 
   )
 
 
-  type ExtractFunction = Element => TypedResource
+  type ExtractFunction = Element ⇒ TypedResource
 
 
   /**

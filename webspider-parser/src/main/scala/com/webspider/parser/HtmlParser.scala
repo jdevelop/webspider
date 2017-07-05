@@ -3,19 +3,15 @@ package com.webspider.parser
 import java.io.InputStream
 
 import com.webspider.core.TypedResource
-import com.webspider.core.utils.LogHelper
-import com.webspider.parser.link.RelativeLinkNormalizer
 import org.jsoup.Jsoup
 
 import scala.collection.JavaConversions._
 
-object HtmlParser extends LogHelper
+object HtmlParser
 
-abstract class HtmlParser(current: String,
-                          expressions: List[(String, ExtractFunction)] = defaults)
+case class HtmlParser(current: String,
+                      expressions: List[(String, ExtractFunction)])
   extends DocumentParser[InputStream] {
-
-  val linkNormalizer: RelativeLinkNormalizer
 
   override def parse(source: InputStream) = {
     val doc = Jsoup.parse(source, "UTF-8", current)
@@ -25,8 +21,7 @@ abstract class HtmlParser(current: String,
           element ⇒ extractor(element)
         }
     } collect {
-      case x: TypedResource ⇒
-        x
+      case x: TypedResource ⇒ x
     }
   }
 

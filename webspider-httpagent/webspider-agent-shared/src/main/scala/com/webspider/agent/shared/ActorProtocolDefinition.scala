@@ -106,7 +106,11 @@ object ActorProtocolDefinition {
         ProducerLog.trace(s"Sending beacon to $sender")
         context unwatch ref
         workers.remove(ref)
-        handleNewTaskRequest(ref)
+        if (!hasMoreTasks && workers.isEmpty) {
+          taskCompleted()
+        } else {
+          handleNewTaskRequest(ref)
+        }
       case (ref: ActorRef, Messages.TaskError(err: ErrorT)) ⇒
         ProducerLog.warn(s"Received error from ${sender} ⇒ $err")
         processResponse(Left(err))
@@ -119,6 +123,8 @@ object ActorProtocolDefinition {
         workers.remove(ref).foreach(enqueueTask)
         handleNewTaskRequest(ref)
     }
+
+    protected def taskCompleted(): Unit = {}
 
 
     // private interface
@@ -156,7 +162,7 @@ object ActorProtocolDefinition {
               case Success(Right(res: ResultT)) ⇒ Messages.TaskResult(res)
               case Success(Left(err: ErrorT)) ⇒ Messages.TaskError(err)
               case Failure(exc: Exception) ⇒
-                ConsumerLog.error("Can't process message payload", exc)
+                ConsumerLog.error(s"Can't process message payload: ${pl}", exc)
                 Messages.TaskFailure(exc)
             }
             memoSender.?(self -> response).mapTo[Messages.Protocol].onComplete(handler)
